@@ -1,0 +1,535 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Selamat Datang di Repository Pembelajaran</title>
+    <style>
+        /* CSS Reset & Variable Setup */
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+        }
+
+        :root {
+            --primary-color: #2563eb;
+            --primary-dark: #1d4ed8;
+            --secondary-color: #0d9488;
+            --accent-color: #f59e0b;
+            --bg-light: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #1e293b;
+            --text-muted: #64748b;
+            --border-color: #e2e8f0;
+        }
+
+        body {
+            background-color: var(--bg-light);
+            color: var(--text-main);
+            line-height: 1.6;
+        }
+
+        a {
+            text-decoration: none;
+            color: inherit;
+        }
+
+        /* Container Layout */
+        .repo-container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        /* Hero Banner Section */
+        .hero-section {
+            background: linear-gradient(135deg, #1e3a8a 0%, #2563eb 50%, #0d9488 100%);
+            border-radius: 20px;
+            padding: 60px 30px;
+            color: #ffffff;
+            text-align: center;
+            box-shadow: 0 10px 25px -5px rgba(37, 99, 235, 0.3);
+            margin-bottom: 40px;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-badge {
+            display: inline-block;
+            background: rgba(255, 255, 255, 0.2);
+            backdrop-filter: blur(10px);
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.875rem;
+            font-weight: 600;
+            margin-bottom: 15px;
+            letter-spacing: 0.5px;
+        }
+
+        .hero-title {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 15px;
+            line-height: 1.2;
+        }
+
+        .hero-subtitle {
+            font-size: 1.15rem;
+            max-width: 700px;
+            margin: 0 auto 30px auto;
+            opacity: 0.9;
+        }
+
+        /* Search Bar */
+        .search-box {
+            max-width: 600px;
+            margin: 0 auto 25px auto;
+            display: flex;
+            background: #ffffff;
+            border-radius: 50px;
+            padding: 6px;
+            box-shadow: 0 4px 20px rgba(0, 0, 0, 0.15);
+        }
+
+        .search-box input {
+            flex: 1;
+            border: none;
+            outline: none;
+            padding: 12px 20px;
+            font-size: 1rem;
+            border-radius: 50px;
+            color: var(--text-main);
+        }
+
+        .search-box button {
+            background-color: var(--primary-color);
+            color: #ffffff;
+            border: none;
+            padding: 12px 28px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: background 0.3s ease;
+        }
+
+        .search-box button:hover {
+            background-color: var(--primary-dark);
+        }
+
+        /* Hero Action Buttons */
+        .hero-actions {
+            display: flex;
+            justify-content: center;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .btn {
+            display: inline-block;
+            padding: 12px 26px;
+            border-radius: 10px;
+            font-weight: 600;
+            transition: all 0.3s ease;
+        }
+
+        .btn-light {
+            background-color: #ffffff;
+            color: var(--primary-color);
+        }
+
+        .btn-light:hover {
+            background-color: #f1f5f9;
+            transform: translateY(-2px);
+        }
+
+        .btn-outline {
+            border: 2px solid rgba(255, 255, 255, 0.8);
+            color: #ffffff;
+        }
+
+        .btn-outline:hover {
+            background: rgba(255, 255, 255, 0.15);
+            transform: translateY(-2px);
+        }
+
+        /* Stats Section */
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            margin-bottom: 50px;
+        }
+
+        .stat-card {
+            background: var(--card-bg);
+            padding: 24px;
+            border-radius: 16px;
+            text-align: center;
+            border: 1px solid var(--border-color);
+            box-shadow: 0 4px 6px -1px rgba(0,0,0,0.05);
+            transition: transform 0.3s ease;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-4px);
+        }
+
+        .stat-number {
+            font-size: 2rem;
+            font-weight: 800;
+            color: var(--primary-color);
+            margin-bottom: 5px;
+        }
+
+        .stat-label {
+            color: var(--text-muted);
+            font-size: 0.9rem;
+            font-weight: 500;
+        }
+
+        /* Section Title */
+        .section-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+
+        .section-title {
+            font-size: 1.5rem;
+            font-weight: 700;
+            color: var(--text-main);
+            position: relative;
+            padding-left: 15px;
+        }
+
+        .section-title::before {
+            content: '';
+            position: absolute;
+            left: 0;
+            top: 15%;
+            height: 70%;
+            width: 4px;
+            background-color: var(--primary-color);
+            border-radius: 2px;
+        }
+
+        .see-all-link {
+            color: var(--primary-color);
+            font-weight: 600;
+            font-size: 0.95rem;
+        }
+
+        /* Category Grid */
+        .category-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(260px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+
+        .category-card {
+            background: var(--card-bg);
+            border: 1px solid var(--border-color);
+            border-radius: 16px;
+            padding: 24px;
+            transition: all 0.3s ease;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+        }
+
+        .category-card:hover {
+            border-color: var(--primary-color);
+            box-shadow: 0 10px 20px rgba(0,0,0,0.08);
+            transform: translateY(-4px);
+        }
+
+        .card-icon {
+            width: 50px;
+            height: 50px;
+            border-radius: 12px;
+            background: #eff6ff;
+            color: var(--primary-color);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            margin-bottom: 18px;
+        }
+
+        .card-title {
+            font-size: 1.15rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+            margin-bottom: 20px;
+            flex-grow: 1;
+        }
+
+        .card-meta {
+            font-size: 0.85rem;
+            font-weight: 600;
+            color: var(--secondary-color);
+            display: flex;
+            align-items: center;
+            gap: 5px;
+        }
+
+        /* Feature Cards Section */
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 24px;
+            margin-bottom: 50px;
+        }
+
+        .feature-item {
+            background: var(--card-bg);
+            border-radius: 16px;
+            border: 1px solid var(--border-color);
+            padding: 24px;
+            display: flex;
+            gap: 20px;
+            align-items: flex-start;
+        }
+
+        .feature-icon-wrapper {
+            background: #f0fdf4;
+            color: var(--secondary-color);
+            padding: 12px;
+            border-radius: 12px;
+            font-size: 1.4rem;
+        }
+
+        .feature-content h4 {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 6px;
+        }
+
+        .feature-content p {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+
+        /* Call To Action Banner */
+        .cta-banner {
+            background: linear-gradient(90deg, #1e293b 0%, #334155 100%);
+            color: #ffffff;
+            border-radius: 20px;
+            padding: 40px 30px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .cta-text h3 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .cta-text p {
+            color: #94a3b8;
+            font-size: 0.95rem;
+        }
+
+        /* Footer */
+        .repo-footer {
+            margin-top: 60px;
+            padding-top: 30px;
+            border-top: 1px solid var(--border-color);
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.875rem;
+        }
+
+        /* Responsive Breakpoints */
+        @media (max-width: 768px) {
+            .hero-title {
+                font-size: 1.8rem;
+            }
+            .hero-subtitle {
+                font-size: 1rem;
+            }
+            .search-box {
+                flex-direction: column;
+                background: transparent;
+                box-shadow: none;
+            }
+            .search-box input {
+                border-radius: 10px;
+                margin-bottom: 10px;
+            }
+            .search-box button {
+                border-radius: 10px;
+            }
+            .cta-banner {
+                flex-direction: column;
+                text-align: center;
+            }
+            .section-header {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 10px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="repo-container">
+        
+        <!-- HERO SECTION -->
+        <section class="hero-section">
+            <span class="hero-badge">✨ Central Learning Hub</span>
+            <h1 class="hero-title">Selamat Datang di Repository Pembelajaran</h1>
+            <p class="hero-subtitle">
+                Akses ribuan materi digital, modul interaktif, panduan mengajar, dan sumber daya akademik terstruktur dalam satu tempat.
+            </p>
+
+            <!-- Search Bar -->
+            <form action="#" method="GET" class="search-box" onsubmit="event.preventDefault();">
+                <input type="text" placeholder="Cari materi, modul, mata pelajaran, atau topik..." aria-label="Cari materi">
+                <button type="submit">Cari Materi</button>
+            </form>
+
+            <!-- Action Buttons -->
+            <div class="hero-actions">
+                <a href="#kategori" class="btn btn-light">Jelajahi Kategori</a>
+                <a href="#panduan" class="btn btn-outline">Panduan Pengguna</a>
+            </div>
+        </section>
+
+        <!-- STATISTIK RINGKAS -->
+        <section class="stats-grid">
+            <div class="stat-card">
+                <div class="stat-number">1,250+</div>
+                <div class="stat-label">Modul & Dokumen</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">450+</div>
+                <div class="stat-label">Video & Multimedia</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">85+</div>
+                <div class="stat-label">Kategori Subjek</div>
+            </div>
+            <div class="stat-card">
+                <div class="stat-number">24/7</div>
+                <div class="stat-label">Akses Terbuka</div>
+            </div>
+        </section>
+
+        <!-- KATEGORI UTAMA -->
+        <section id="kategori">
+            <div class="section-header">
+                <h2 class="section-title">Kategori Materi Pembelajaran</h2>
+                <a href="#" class="see-all-link">Lihat Semua Kategori &rarr;</a>
+            </div>
+
+            <div class="category-grid">
+                <!-- Card 1 -->
+                <div class="category-card">
+                    <div>
+                        <div class="card-icon">💻</div>
+                        <h3 class="card-title">Sains & Teknologi</h3>
+                        <p class="card-desc">Informatika, Pemrograman, Rekayasa Perangkat Lunak, dan Ilmu Komputer Dasar.</p>
+                    </div>
+                    <a href="#" class="card-meta">340+ Resource &rarr;</a>
+                </div>
+
+                <!-- Card 2 -->
+                <div class="category-card">
+                    <div>
+                        <div class="card-icon" style="background: #fef3c7; color: #d97706;">📐</div>
+                        <h3 class="card-title">Matematika & MIPA</h3>
+                        <p class="card-desc">Kalkulus, Aljabar, Fisika Dasar, Kimia, dan Biologi Terapan.</p>
+                    </div>
+                    <a href="#" class="card-meta" style="color: #d97706;">210+ Resource &rarr;</a>
+                </div>
+
+                <!-- Card 3 -->
+                <div class="category-card">
+                    <div>
+                        <div class="card-icon" style="background: #fce7f3; color: #db2777;">📚</div>
+                        <h3 class="card-title">Bahasa & Literasi</h3>
+                        <p class="card-desc">Bahasa Indonesia, English for Academic Purposes, dan Penulisan Ilmiah.</p>
+                    </div>
+                    <a href="#" class="card-meta" style="color: #db2777;">180+ Resource &rarr;</a>
+                </div>
+
+                <!-- Card 4 -->
+                <div class="category-card">
+                    <div>
+                        <div class="card-icon" style="background: #f3e8ff; color: #9333ea;">📊</div>
+                        <h3 class="card-title">Ekonomi & Bisnis</h3>
+                        <p class="card-desc">Manajemen, Akuntansi, Kewirausahaan, dan Analisis Data Bisnis.</p>
+                    </div>
+                    <a href="#" class="card-meta" style="color: #9333ea;">150+ Resource &rarr;</a>
+                </div>
+            </div>
+        </section>
+
+        <!-- FITUR KEUNGGULAN REPOSITORY -->
+        <section style="margin-bottom: 50px;">
+            <div class="section-header">
+                <h2 class="section-title">Mengapa Menggunakan Repository Ini?</h2>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-item">
+                    <div class="feature-icon-wrapper">🔍</div>
+                    <div class="feature-content">
+                        <h4>Pencarian Cepat & Tepat</h4>
+                        <p>Temukan materi referensi, e-book, dan slide presentasi dalam hitungan detik.</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon-wrapper" style="background: #eff6ff; color: #2563eb;">📱</div>
+                    <div class="feature-content">
+                        <h4>Akses Responsif</h4>
+                        <p>Didesain rapi untuk diakses dengan nyaman melalui Laptop, Tablet, maupun Smartphone.</p>
+                    </div>
+                </div>
+
+                <div class="feature-item">
+                    <div class="feature-icon-wrapper" style="background: #fef3c7; color: #d97706;">🛡️</div>
+                    <div class="feature-content">
+                        <h4>Konten Terverifikasi</h4>
+                        <p>Seluruh berkas dan media pembelajaran disajikan oleh pengajar dan penyusun resmi.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CALL TO ACTION / HUBUNGI ADMIN -->
+        <section class="cta-banner" id="panduan">
+            <div class="cta-text">
+                <h3>Ingin Menambahkan Materi Pembelajaran Baru?</h3>
+                <p>Pengajar dan pengelola dapat mengunggah modul atau berkas baru ke dalam repositori ini.</p>
+            </div>
+            <div>
+                <a href="#" class="btn btn-light">Panduan Kontributor</a>
+            </div>
+        </section>
+
+        <!-- FOOTER RINGKAS -->
+        <footer class="repo-footer">
+            <p>&copy; 2026 Repository Pembelajaran Digital. Hak Cipta Dilindungi Undang-Undang.</p>
+        </footer>
+
+    </div>
+
+</body>
+</html>
