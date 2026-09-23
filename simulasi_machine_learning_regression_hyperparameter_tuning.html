@@ -1,0 +1,1191 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Simulasi ML Regression & Live Hyperparameter Tuning</title>
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Chart.js CDN -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Fira+Code:wght@400;500&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+        code, pre {
+            font-family: 'Fira Code', monospace;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-track {
+            background: #1e293b;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #475569;
+            border-radius: 3px;
+        }
+        ::-webkit-scrollbar-thumb:hover {
+            background: #64748b;
+        }
+    </style>
+</head>
+<body class="bg-slate-900 text-slate-100 min-h-screen flex flex-col">
+
+    <!-- HEADER NAVBAR -->
+    <header class="border-b border-slate-800 bg-slate-900/80 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center gap-4">
+            <div class="flex items-center gap-3">
+                <div class="p-2 bg-indigo-600/20 text-indigo-400 rounded-xl border border-indigo-500/30">
+                    <i class="fa-solid fa-chart-line text-xl"></i>
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">ML Regression Lab</h1>
+                    <p class="text-xs text-slate-400">Supervised Learning & Live Hyperparameter Tuning Simulator</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-3">
+                <span class="inline-flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-medium bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 animate-pulse"></span> Live Interactive Engine
+                </span>
+                <button id="btnResetAll" class="px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-xs font-medium transition flex items-center gap-1.5">
+                    <i class="fa-solid fa-rotate-left"></i> Reset Parameter
+                </button>
+            </div>
+        </div>
+    </header>
+
+    <!-- MAIN CONTENT CONTAINER -->
+    <main class="max-w-7xl mx-auto px-4 py-6 flex-1 w-full grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- LEFT PANEL: CONTROLS & HYPERPARAMETERS (4 Cols) -->
+        <section class="lg:col-span-4 flex flex-col gap-6">
+            
+            <!-- 1. ALGORITHM SELECTION -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-robot text-indigo-400"></i> Pilih Algoritma
+                </h2>
+                <div class="grid grid-cols-2 gap-2" id="algoSelector">
+                    <button data-algo="decision_tree" class="algo-btn active p-3 text-left rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-200 transition text-xs font-medium flex flex-col gap-1">
+                        <span class="font-bold text-sm text-white">Decision Tree</span>
+                        <span class="text-[11px] opacity-70">Non-linear & Splitting</span>
+                    </button>
+                    <button data-algo="knn" class="algo-btn p-3 text-left rounded-xl border border-slate-700 bg-slate-800/80 text-slate-400 hover:border-slate-600 transition text-xs font-medium flex flex-col gap-1">
+                        <span class="font-bold text-sm text-white">KNN Regressor</span>
+                        <span class="text-[11px] opacity-70">Distance-based</span>
+                    </button>
+                    <button data-algo="polynomial" class="algo-btn p-3 text-left rounded-xl border border-slate-700 bg-slate-800/80 text-slate-400 hover:border-slate-600 transition text-xs font-medium flex flex-col gap-1">
+                        <span class="font-bold text-sm text-white">Polynomial Ridge</span>
+                        <span class="text-[11px] opacity-70">Linear + Feature Map</span>
+                    </button>
+                    <button data-algo="random_forest" class="algo-btn p-3 text-left rounded-xl border border-slate-700 bg-slate-800/80 text-slate-400 hover:border-slate-600 transition text-xs font-medium flex flex-col gap-1">
+                        <span class="font-bold text-sm text-white">Random Forest</span>
+                        <span class="text-[11px] opacity-70">Ensemble Averaging</span>
+                    </button>
+                </div>
+            </div>
+
+            <!-- 2. DATASET GENERATOR CONTROLS -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl">
+                <div class="flex justify-between items-center mb-4">
+                    <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                        <i class="fa-solid fa-database text-teal-400"></i> Generasi Data (Synthetic)
+                    </h2>
+                    <button id="btnRegenerate" class="text-xs text-indigo-400 hover:text-indigo-300 font-medium flex items-center gap-1">
+                        <i class="fa-solid fa-arrows-rotate"></i> Acak Data
+                    </button>
+                </div>
+
+                <div class="space-y-4 text-xs">
+                    <div>
+                        <label class="block text-slate-400 mb-1">Target Function (Bentuk Data)</label>
+                        <select id="dataPreset" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="sine">Sinusoidal Curve (Non-Linear)</option>
+                            <option value="quadratic">Parabola / Quadratic ($y = x^2$)</option>
+                            <option value="step">Step Function / Discontinuous</option>
+                            <option value="cubic">Cubic Polynomial ($y = x^3 - 2x$)</option>
+                        </select>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span>Jumlah Data Points ($N$)</span>
+                            <span id="lblDataCount" class="font-bold text-indigo-400">80</span>
+                        </div>
+                        <input type="range" id="paramDataCount" min="20" max="200" step="10" value="80" class="w-full accent-indigo-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span>Level Noise ($\sigma$)</span>
+                            <span id="lblNoiseLevel" class="font-bold text-indigo-400">0.25</span>
+                        </div>
+                        <input type="range" id="paramNoiseLevel" min="0" max="1" step="0.05" value="0.25" class="w-full accent-indigo-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span>Rasio Train / Test Split</span>
+                            <span id="lblTrainRatio" class="font-bold text-indigo-400">75% / 25%</span>
+                        </div>
+                        <input type="range" id="paramTrainRatio" min="50" max="90" step="5" value="75" class="w-full accent-indigo-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+            <!-- 3. LIVE HYPERPARAMETER TUNING PANEL -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl">
+                <h2 class="text-sm font-semibold text-slate-300 uppercase tracking-wider mb-4 flex items-center gap-2">
+                    <i class="fa-solid fa-sliders text-amber-400"></i> Hyperparameter Tuning
+                </h2>
+
+                <!-- DECISION TREE HYPERPARAMS -->
+                <div id="hp_decision_tree" class="hp-panel space-y-4 text-xs">
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Max Depth (Kedalaman Pohon)</span>
+                            <span id="lblTreeDepth" class="font-bold text-amber-400">3</span>
+                        </div>
+                        <input type="range" id="paramTreeDepth" min="1" max="15" step="1" value="3" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                        <p class="text-[11px] text-slate-500 mt-1">Mengontrol kompleksitas pohon. Nilai tinggi berisiko overfitting.</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Min Samples Split</span>
+                            <span id="lblMinSplit" class="font-bold text-amber-400">4</span>
+                        </div>
+                        <input type="range" id="paramMinSplit" min="2" max="20" step="1" value="4" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                        <p class="text-[11px] text-slate-500 mt-1">Jumlah sampel minimum yang diperlukan untuk membagi simpul.</p>
+                    </div>
+                </div>
+
+                <!-- KNN HYPERPARAMS -->
+                <div id="hp_knn" class="hp-panel space-y-4 text-xs hidden">
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">K-Neighbors ($K$)</span>
+                            <span id="lblKVal" class="font-bold text-amber-400">5</span>
+                        </div>
+                        <input type="range" id="paramKVal" min="1" max="25" step="1" value="5" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                        <p class="text-[11px] text-slate-500 mt-1">$K=1$ sangat sensitif noise (high variance). $K$ besar membuat prediksi terlalu mulus (high bias).</p>
+                    </div>
+
+                    <div>
+                        <label class="block text-slate-400 mb-1">Weighting Method</label>
+                        <select id="paramKnnWeights" class="w-full bg-slate-900 border border-slate-700 rounded-lg px-3 py-2 text-slate-200 focus:outline-none focus:border-indigo-500">
+                            <option value="uniform">Uniform (Bobot Rata-rata Sama)</option>
+                            <option value="distance">Distance (Bobot Berbanding Terbalik Jarak)</option>
+                        </select>
+                    </div>
+                </div>
+
+                <!-- POLYNOMIAL RIDGE HYPERPARAMS -->
+                <div id="hp_polynomial" class="hp-panel space-y-4 text-xs hidden">
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Polynomial Degree ($d$)</span>
+                            <span id="lblPolyDegree" class="font-bold text-amber-400">3</span>
+                        </div>
+                        <input type="range" id="paramPolyDegree" min="1" max="10" step="1" value="3" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                        <p class="text-[11px] text-slate-500 mt-1">Derajat polinomial feature expansion ($x, x^2, \dots, x^d$).</p>
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Regularization Alpha ($\alpha$)</span>
+                            <span id="lblAlphaVal" class="font-bold text-amber-400">0.01</span>
+                        </div>
+                        <input type="range" id="paramAlphaVal" min="0" max="2" step="0.01" value="0.01" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                        <p class="text-[11px] text-slate-500 mt-1">Penalti L2 Ridge Regression untuk mencegah koefisien ekstrem.</p>
+                    </div>
+                </div>
+
+                <!-- RANDOM FOREST HYPERPARAMS -->
+                <div id="hp_random_forest" class="hp-panel space-y-4 text-xs hidden">
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Number of Trees ($N_{estimators}$)</span>
+                            <span id="lblNumTrees" class="font-bold text-amber-400">10</span>
+                        </div>
+                        <input type="range" id="paramNumTrees" min="1" max="30" step="1" value="10" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+
+                    <div>
+                        <div class="flex justify-between text-slate-400 mb-1">
+                            <span class="font-medium text-slate-200">Max Depth per Tree</span>
+                            <span id="lblRfTreeDepth" class="font-bold text-amber-400">4</span>
+                        </div>
+                        <input type="range" id="paramRfTreeDepth" min="1" max="10" step="1" value="4" class="w-full accent-amber-500 bg-slate-700 rounded-lg h-1.5 cursor-pointer">
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+        <!-- RIGHT PANEL: VISUALIZATION & METRICS (8 Cols) -->
+        <section class="lg:col-span-8 flex flex-col gap-6">
+
+            <!-- 1. MAIN REGRESSION PLOT CANVAS -->
+            <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl flex flex-col">
+                <div class="flex flex-wrap justify-between items-center gap-2 mb-4">
+                    <div>
+                        <h2 class="text-sm font-semibold text-slate-200 flex items-center gap-2">
+                            <i class="fa-solid fa-chart-scatter text-sky-400"></i> Visualisasi Regression Fit
+                        </h2>
+                        <p class="text-xs text-slate-400">Titik biru = Data Latih (Train), Titik Merah = Data Uji (Test). Garis ungu = Model Prediction.</p>
+                    </div>
+                    <div class="flex items-center gap-2 text-xs">
+                        <button id="btnClearCustom" class="px-2.5 py-1 bg-slate-700 hover:bg-slate-600 rounded-lg text-slate-300 transition">
+                            <i class="fa-solid fa-trash-can"></i> Hapus Point Manual
+                        </button>
+                    </div>
+                </div>
+
+                <!-- CHART WRAPPER -->
+                <div class="relative w-full h-[360px] bg-slate-950/60 rounded-xl p-2 border border-slate-800">
+                    <canvas id="mainPlotCanvas"></canvas>
+                </div>
+                
+                <div class="mt-2 text-[11px] text-slate-500 flex justify-between items-center px-1">
+                    <span><i class="fa-solid fa-mouse text-slate-400"></i> **Tips**: Klik di area grafik untuk menambahkan custom data point secara langsung!</span>
+                    <span id="outlierCount" class="text-indigo-400 font-medium">Custom Points: 0</span>
+                </div>
+            </div>
+
+            <!-- 2. METRICS & MODEL HEALTH DASHBOARD -->
+            <div class="grid grid-cols-2 md:grid-cols-4 gap-4">
+                <!-- MSE -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 backdrop-blur">
+                    <div class="text-[11px] text-slate-400 uppercase tracking-wider mb-1">Mean Squared Error</div>
+                    <div id="metricMSE" class="text-lg font-extrabold text-indigo-400">0.000</div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">MSE Uji (Test Data)</div>
+                </div>
+
+                <!-- RMSE -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 backdrop-blur">
+                    <div class="text-[11px] text-slate-400 uppercase tracking-wider mb-1">Root MSE (RMSE)</div>
+                    <div id="metricRMSE" class="text-lg font-extrabold text-teal-400">0.000</div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">Rata-rata error unit sama</div>
+                </div>
+
+                <!-- R2 SCORE -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 backdrop-blur">
+                    <div class="text-[11px] text-slate-400 uppercase tracking-wider mb-1">R² Score ($R^2$)</div>
+                    <div id="metricR2" class="text-lg font-extrabold text-emerald-400">0.000</div>
+                    <div class="text-[10px] text-slate-500 mt-0.5">Variansi terjelaskan (1.0 = Max)</div>
+                </div>
+
+                <!-- MODEL STATUS (FIT STATE) -->
+                <div id="cardModelStatus" class="bg-slate-800/60 border border-slate-700/60 rounded-xl p-4 backdrop-blur flex flex-col justify-between">
+                    <div class="text-[11px] text-slate-400 uppercase tracking-wider">Status Fit Model</div>
+                    <div id="statusFitBadge" class="inline-block px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 w-fit my-1">
+                        Balanced Fit
+                    </div>
+                    <div id="statusFitDesc" class="text-[10px] text-slate-400 leading-tight">Generalisasi baik.</div>
+                </div>
+            </div>
+
+            <!-- 3. HYPERPARAMETER LOSS CURVE & PYTHON CODE GENERATOR -->
+            <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <!-- LOSS CURVE CHART -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl flex flex-col">
+                    <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider mb-2 flex items-center gap-2">
+                        <i class="fa-solid fa-chart-line text-pink-400"></i> Train vs Test Loss Curve
+                    </h3>
+                    <p class="text-[11px] text-slate-400 mb-3">Memantau overfitting saat hyperparameter utama ditingkatkan.</p>
+                    <div class="relative w-full h-[180px] bg-slate-950/60 rounded-xl p-2 border border-slate-800">
+                        <canvas id="lossCurveCanvas"></canvas>
+                    </div>
+                </div>
+
+                <!-- PYTHON CODE PREVIEW -->
+                <div class="bg-slate-800/60 border border-slate-700/60 rounded-2xl p-5 backdrop-blur shadow-xl flex flex-col">
+                    <div class="flex justify-between items-center mb-2">
+                        <h3 class="text-xs font-bold text-slate-300 uppercase tracking-wider flex items-center gap-2">
+                            <i class="fa-brands fa-python text-amber-400"></i> Equivalent Scikit-Learn Code
+                        </h3>
+                        <button id="btnCopyCode" class="text-[11px] bg-slate-700 hover:bg-slate-600 px-2 py-0.5 rounded text-slate-300 transition">
+                            <i class="fa-solid fa-copy"></i> Copy
+                        </button>
+                    </div>
+                    <div class="relative flex-1 bg-slate-950 rounded-xl p-3 border border-slate-800 overflow-x-auto">
+                        <pre id="codeBlock" class="text-[11px] text-indigo-300 leading-relaxed"></pre>
+                    </div>
+                </div>
+            </div>
+
+        </section>
+
+    </main>
+
+    <!-- FOOTER -->
+    <footer class="border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        Simulasi Machine Learning Supervised Regression & Hyperparameter Tuning • Interactive Client-side JS Engine
+    </footer>
+
+    <script>
+        // Global App State
+        const state = {
+            algo: 'decision_tree',
+            preset: 'sine',
+            dataCount: 80,
+            noiseLevel: 0.25,
+            trainRatio: 0.75,
+            
+            // Hyperparameters
+            hp: {
+                treeDepth: 3,
+                minSplit: 4,
+                kVal: 5,
+                knnWeights: 'uniform',
+                polyDegree: 3,
+                alphaVal: 0.01,
+                numTrees: 10,
+                rfTreeDepth: 4
+            },
+
+            // Datasets
+            dataset: {
+                trainX: [], trainY: [],
+                testX: [], testY: [],
+                allX: [], allY: []
+            },
+            
+            // Custom user-added points via click
+            customPoints: [],
+
+            // Charts
+            mainChart: null,
+            lossChart: null
+        };
+
+        // --- MATHEMATICAL & SYNTHETIC DATA HELPER FUNCTIONS ---
+        function generateSyntheticData() {
+            const count = state.dataCount;
+            const noise = state.noiseLevel;
+            const rawX = [];
+            const rawY = [];
+
+            for (let i = 0; i < count; i++) {
+                // Generate X distributed between -3.0 and 3.0
+                const x = -3.0 + (6.0 * i) / (count - 1);
+                let y = 0;
+
+                // Select target function based on preset
+                switch (state.preset) {
+                    case 'sine':
+                        y = Math.sin(x * 1.8) + 0.5 * x;
+                        break;
+                    case 'quadratic':
+                        y = 0.5 * (x * x) - 1.5;
+                        break;
+                    case 'step':
+                        y = x < -1.0 ? -1.5 : (x < 1.0 ? 0.2 : 1.8);
+                        break;
+                    case 'cubic':
+                        y = 0.25 * (Math.pow(x, 3) - 3 * x);
+                        break;
+                    default:
+                        y = Math.sin(x);
+                }
+
+                // Add Gaussian noise (Box-Muller transform)
+                const u1 = Math.random();
+                const u2 = Math.random();
+                const randStdNormal = Math.sqrt(-2.0 * Math.log(u1 || 0.00001)) * Math.cos(2.0 * Math.PI * u2);
+                y += randStdNormal * noise;
+
+                rawX.push(x);
+                rawY.push(y);
+            }
+
+            // Add custom user points
+            state.customPoints.forEach(p => {
+                rawX.push(p.x);
+                rawY.push(p.y);
+            });
+
+            // Random shuffle before splitting
+            const indices = Array.from({ length: rawX.length }, (_, i) => i);
+            for (let i = indices.length - 1; i > 0; i--) {
+                const j = Math.floor(Math.random() * (i + 1));
+                [indices[i], indices[j]] = [indices[j], indices[i]];
+            }
+
+            const trainCutoff = Math.floor(indices.length * state.trainRatio);
+            
+            state.dataset.trainX = [];
+            state.dataset.trainY = [];
+            state.dataset.testX = [];
+            state.dataset.testY = [];
+
+            indices.forEach((idx, order) => {
+                if (order < trainCutoff) {
+                    state.dataset.trainX.push(rawX[idx]);
+                    state.dataset.trainY.push(rawY[idx]);
+                } else {
+                    state.dataset.testX.push(rawX[idx]);
+                    state.dataset.testY.push(rawY[idx]);
+                }
+            });
+
+            state.dataset.allX = rawX;
+            state.dataset.allY = rawY;
+        }
+
+
+        // 1. DECISION TREE REGRESSOR ENGINE
+        class DecisionTreeRegressor {
+            constructor(maxDepth = 3, minSamplesSplit = 2) {
+                this.maxDepth = maxDepth;
+                this.minSamplesSplit = minSamplesSplit;
+                this.tree = null;
+            }
+
+            fit(X, Y) {
+                const data = X.map((x, i) => ({ x, y: Y[i] }));
+                this.tree = this.buildTree(data, 0);
+            }
+
+            buildTree(data, depth) {
+                const n = data.length;
+                const meanY = n > 0 ? data.reduce((sum, d) => sum + d.y, 0) / n : 0;
+
+                if (depth >= this.maxDepth || n < this.minSamplesSplit) {
+                    return { isLeaf: true, value: meanY };
+                }
+
+                // Find best split along 1D X axis
+                const sorted = [...data].sort((a, b) => a.x - b.x);
+                let bestMse = Infinity;
+                let bestThreshold = null;
+                let bestLeft = [];
+                let bestRight = [];
+
+                for (let i = 1; i < sorted.length; i++) {
+                    const threshold = (sorted[i - 1].x + sorted[i].x) / 2;
+                    const left = sorted.filter(d => d.x <= threshold);
+                    const right = sorted.filter(d => d.x > threshold);
+
+                    if (left.length === 0 || right.length === 0) continue;
+
+                    const meanLeft = left.reduce((s, d) => s + d.y, 0) / left.length;
+                    const meanRight = right.reduce((s, d) => s + d.y, 0) / right.length;
+
+                    const mseLeft = left.reduce((s, d) => s + Math.pow(d.y - meanLeft, 2), 0);
+                    const mseRight = right.reduce((s, d) => s + Math.pow(d.y - meanRight, 2), 0);
+                    const totalMse = (mseLeft + mseRight) / n;
+
+                    if (totalMse < bestMse) {
+                        bestMse = totalMse;
+                        bestThreshold = threshold;
+                        bestLeft = left;
+                        bestRight = right;
+                    }
+                }
+
+                if (bestThreshold === null) {
+                    return { isLeaf: true, value: meanY };
+                }
+
+                return {
+                    isLeaf: false,
+                    threshold: bestThreshold,
+                    left: this.buildTree(bestLeft, depth + 1),
+                    right: this.buildTree(bestRight, depth + 1)
+                };
+            }
+
+            predictSingle(x, node) {
+                if (node.isLeaf) return node.value;
+                if (x <= node.threshold) {
+                    return this.predictSingle(x, node.left);
+                } else {
+                    return this.predictSingle(x, node.right);
+                }
+            }
+
+            predict(X) {
+                if (!this.tree) return X.map(() => 0);
+                return X.map(x => this.predictSingle(x, this.tree));
+            }
+        }
+
+        // 2. KNN REGRESSOR ENGINE
+        class KNNRegressor {
+            constructor(k = 5, weights = 'uniform') {
+                this.k = k;
+                this.weights = weights;
+            }
+
+            fit(X, Y) {
+                this.trainX = X;
+                this.trainY = Y;
+            }
+
+            predict(X) {
+                return X.map(x => {
+                    const kVal = Math.min(this.k, this.trainX.length);
+                    // Compute Euclidean distances
+                    const distances = this.trainX.map((tx, idx) => ({
+                        dist: Math.abs(tx - x),
+                        y: this.trainY[idx]
+                    }));
+
+                    distances.sort((a, b) => a.dist - b.dist);
+                    const neighbors = distances.slice(0, kVal);
+
+                    if (this.weights === 'uniform') {
+                        return neighbors.reduce((sum, n) => sum + n.y, 0) / kVal;
+                    } else {
+                        // Inverse distance weights
+                        let totalWeight = 0;
+                        let weightedSum = 0;
+                        neighbors.forEach(n => {
+                            const w = 1.0 / (n.dist + 1e-5);
+                            weightedSum += n.y * w;
+                            totalWeight += w;
+                        });
+                        return weightedSum / totalWeight;
+                    }
+                });
+            }
+        }
+
+        // 3. POLYNOMIAL RIDGE REGRESSION ENGINE (Closed-form via Normal Equations)
+        class PolynomialRidgeRegression {
+            constructor(degree = 3, alpha = 0.01) {
+                this.degree = degree;
+                this.alpha = alpha;
+                this.weights = [];
+            }
+
+            fit(X, Y) {
+                const degree = this.degree;
+                const N = X.length;
+                
+                // Construct Vandermonde design matrix X_poly
+                const Phi = [];
+                for (let i = 0; i < N; i++) {
+                    const row = [];
+                    for (let d = 0; d <= degree; d++) {
+                        row.push(Math.pow(X[i], d));
+                    }
+                    Phi.push(row);
+                }
+
+                // Compute (Phi^T * Phi + alpha * I) W = Phi^T * Y
+                const numFeatures = degree + 1;
+                const A = Array.from({ length: numFeatures }, () => Array(numFeatures).fill(0));
+                const B = Array(numFeatures).fill(0);
+
+                for (let r = 0; r < numFeatures; r++) {
+                    for (let c = 0; c < numFeatures; c++) {
+                        let sum = 0;
+                        for (let i = 0; i < N; i++) {
+                            sum += Phi[i][r] * Phi[i][c];
+                        }
+                        // Add L2 Ridge penalty to diagonal (except bias at index 0)
+                        if (r === c && r > 0) {
+                            sum += this.alpha * N;
+                        }
+                        A[r][c] = sum;
+                    }
+
+                    let bSum = 0;
+                    for (let i = 0; i < N; i++) {
+                        bSum += Phi[i][r] * Y[i];
+                    }
+                    B[r] = bSum;
+                }
+
+                // Solve linear system A * W = B using Gaussian Elimination
+                this.weights = this.solveLinearSystem(A, B);
+            }
+
+            solveLinearSystem(A, B) {
+                const n = B.length;
+                for (let i = 0; i < n; i++) {
+                    // Pivot selection
+                    let maxRow = i;
+                    for (let k = i + 1; k < n; k++) {
+                        if (Math.abs(A[k][i]) > Math.abs(A[maxRow][i])) {
+                            maxRow = k;
+                        }
+                    }
+                    [A[i], A[maxRow]] = [A[maxRow], A[i]];
+                    [B[i], B[maxRow]] = [B[maxRow], B[i]];
+
+                    if (Math.abs(A[i][i]) < 1e-12) continue; // Singular
+
+                    for (let k = i + 1; k < n; k++) {
+                        const c = -A[k][i] / A[i][i];
+                        for (let j = i; j < n; j++) {
+                            if (i === j) A[k][j] = 0;
+                            else A[k][j] += c * A[i][j];
+                        }
+                        B[k] += c * B[i];
+                    }
+                }
+
+                const x = Array(n).fill(0);
+                for (let i = n - 1; i >= 0; i--) {
+                    let sum = 0;
+                    for (let j = i + 1; j < n; j++) {
+                        sum += A[i][j] * x[j];
+                    }
+                    x[i] = (B[i] - sum) / (A[i][i] || 1e-12);
+                }
+                return x;
+            }
+
+            predict(X) {
+                return X.map(x => {
+                    let pred = 0;
+                    for (let d = 0; d <= this.degree; d++) {
+                        pred += (this.weights[d] || 0) * Math.pow(x, d);
+                    }
+                    return pred;
+                });
+            }
+        }
+
+        // 4. RANDOM FOREST REGRESSOR ENGINE
+        class RandomForestRegressor {
+            constructor(numTrees = 10, maxDepth = 4) {
+                this.numTrees = numTrees;
+                this.maxDepth = maxDepth;
+                this.trees = [];
+            }
+
+            fit(X, Y) {
+                this.trees = [];
+                const n = X.length;
+
+                for (let t = 0; t < this.numTrees; t++) {
+                    // Bootstrap sampling with replacement
+                    const bootX = [];
+                    const bootY = [];
+                    for (let i = 0; i < n; i++) {
+                        const idx = Math.floor(Math.random() * n);
+                        bootX.push(X[idx]);
+                        bootY.push(Y[idx]);
+                    }
+
+                    const tree = new DecisionTreeRegressor(this.maxDepth, 2);
+                    tree.fit(bootX, bootY);
+                    this.trees.push(tree);
+                }
+            }
+
+            predict(X) {
+                if (this.trees.length === 0) return X.map(() => 0);
+                const allPreds = this.trees.map(tree => tree.predict(X));
+                
+                // Average predictions across trees
+                return X.map((_, i) => {
+                    const sum = allPreds.reduce((acc, preds) => acc + preds[i], 0);
+                    return sum / this.trees.length;
+                });
+            }
+        }
+
+        
+        // --- METRICS CALCULATION ---
+        function calculateMetrics(actualY, predY) {
+            const n = actualY.length;
+            if (n === 0) return { mse: 0, rmse: 0, mae: 0, r2: 0 };
+
+            let sumSquaredErr = 0;
+            let sumAbsErr = 0;
+            const meanY = actualY.reduce((a, b) => a + b, 0) / n;
+            let totalVariance = 0;
+
+            for (let i = 0; i < n; i++) {
+                const err = actualY[i] - predY[i];
+                sumSquaredErr += err * err;
+                sumAbsErr += Math.abs(err);
+                totalVariance += Math.pow(actualY[i] - meanY, 2);
+            }
+
+            const mse = sumSquaredErr / n;
+            const rmse = Math.sqrt(mse);
+            const mae = sumAbsErr / n;
+            const r2 = totalVariance === 0 ? 1 : 1 - (sumSquaredErr / totalVariance);
+
+            return { mse, rmse, mae, r2 };
+        }
+
+
+        // --- CHART RENDERING ---
+        function initCharts() {
+            // Main Plot Chart
+            const ctxMain = document.getElementById('mainPlotCanvas').getContext('2d');
+            state.mainChart = new Chart(ctxMain, {
+                type: 'scatter',
+                data: {
+                    datasets: [
+                        {
+                            label: 'Train Data',
+                            data: [],
+                            backgroundColor: '#38bdf8', // Light Blue
+                            borderColor: '#0284c7',
+                            borderWidth: 1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Test Data',
+                            data: [],
+                            backgroundColor: '#f43f5e', // Rose/Red
+                            borderColor: '#e11d48',
+                            borderWidth: 1,
+                            pointRadius: 4,
+                            pointHoverRadius: 6
+                        },
+                        {
+                            label: 'Regression Prediction Curve',
+                            data: [],
+                            type: 'line',
+                            borderColor: '#a855f7', // Purple
+                            borderWidth: 3,
+                            fill: false,
+                            pointRadius: 0,
+                            tension: 0.1
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            type: 'linear',
+                            position: 'bottom',
+                            min: -3.2,
+                            max: 3.2,
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        },
+                        y: {
+                            grid: { color: '#334155' },
+                            ticks: { color: '#94a3b8' }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            labels: { color: '#cbd5e1', font: { size: 11 } }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: (ctx) => `(${ctx.parsed.x.toFixed(2)}, ${ctx.parsed.y.toFixed(2)})`
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Loss Curve Chart
+            const ctxLoss = document.getElementById('lossCurveCanvas').getContext('2d');
+            state.lossChart = new Chart(ctxLoss, {
+                type: 'line',
+                data: {
+                    labels: [],
+                    datasets: [
+                        {
+                            label: 'Train MSE',
+                            data: [],
+                            borderColor: '#38bdf8',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            fill: false
+                        },
+                        {
+                            label: 'Test MSE',
+                            data: [],
+                            borderColor: '#f43f5e',
+                            borderWidth: 2,
+                            pointRadius: 2,
+                            fill: false
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    animation: false,
+                    scales: {
+                        x: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        },
+                        y: {
+                            grid: { color: '#1e293b' },
+                            ticks: { color: '#64748b', font: { size: 10 } }
+                        }
+                    },
+                    plugins: {
+                        legend: { labels: { color: '#cbd5e1', font: { size: 10 } } }
+                    }
+                }
+            });
+        }
+
+
+        // --- MAIN PIPELINE UPDATE ---
+        function updateSimulation() {
+            const { trainX, trainY, testX, testY } = state.dataset;
+
+            if (trainX.length === 0) return;
+
+            // Instantiate active model
+            let model;
+            switch (state.algo) {
+                case 'decision_tree':
+                    model = new DecisionTreeRegressor(state.hp.treeDepth, state.hp.minSplit);
+                    break;
+                case 'knn':
+                    model = new KNNRegressor(state.hp.kVal, state.hp.knnWeights);
+                    break;
+                case 'polynomial':
+                    model = new PolynomialRidgeRegression(state.hp.polyDegree, state.hp.alphaVal);
+                    break;
+                case 'random_forest':
+                    model = new RandomForestRegressor(state.hp.numTrees, state.hp.rfTreeDepth);
+                    break;
+            }
+
+            // Fit model on training data
+            model.fit(trainX, trainY);
+
+            // Generate dense curve predictions for smooth visualization
+            const curvePointsCount = 200;
+            const curveX = [];
+            for (let i = 0; i <= curvePointsCount; i++) {
+                curveX.push(-3.2 + (6.4 * i) / curvePointsCount);
+            }
+            const curveY = model.predict(curveX);
+
+            // Predict on Test & Train datasets
+            const trainPredY = model.predict(trainX);
+            const testPredY = model.predict(testX);
+
+            // Calculate Metrics
+            const trainMetrics = calculateMetrics(trainY, trainPredY);
+            const testMetrics = calculateMetrics(testY, testPredY);
+
+            // Update UI Metrics Display
+            document.getElementById('metricMSE').innerText = testMetrics.mse.toFixed(4);
+            document.getElementById('metricRMSE').innerText = testMetrics.rmse.toFixed(4);
+            document.getElementById('metricR2').innerText = testMetrics.r2.toFixed(3);
+
+            // Update Model Fit Status (Overfitting / Underfitting heuristic)
+            updateModelFitBadge(trainMetrics.mse, testMetrics.mse, testMetrics.r2);
+
+            // Update Main Chart Data
+            state.mainChart.data.datasets[0].data = trainX.map((x, i) => ({ x, y: trainY[i] }));
+            state.mainChart.data.datasets[1].data = testX.map((x, i) => ({ x, y: testY[i] }));
+            state.mainChart.data.datasets[2].data = curveX.map((x, i) => ({ x, y: curveY[i] }));
+            state.mainChart.update();
+
+            // Update Loss Curve Chart
+            updateLossCurveChart();
+
+            // Update Python Code Generator
+            updatePythonCodeSnippet();
+        }
+
+        // --- MODEL FIT STATUS BADGE ---
+        function updateModelFitBadge(trainMse, testMse, r2) {
+            const badge = document.getElementById('statusFitBadge');
+            const desc = document.getElementById('statusFitDesc');
+
+            const mseRatio = testMse / (trainMse + 1e-5);
+
+            if (mseRatio > 2.2 && trainMse < 0.1) {
+                badge.className = "inline-block px-2 py-0.5 rounded text-xs font-bold bg-rose-500/20 text-rose-400 border border-rose-500/30 my-1";
+                badge.innerText = "Overfitting (High Variance)";
+                desc.innerText = "Model terlalu menghafal noise data latih. Kurangi kompleksitas parameter.";
+            } else if (r2 < 0.3 || (trainMse > 0.4 && testMse > 0.4)) {
+                badge.className = "inline-block px-2 py-0.5 rounded text-xs font-bold bg-amber-500/20 text-amber-400 border border-amber-500/30 my-1";
+                badge.innerText = "Underfitting (High Bias)";
+                desc.innerText = "Model terlalu sederhana untuk menangkap pola. Tingkatkan parameter kompleksitas.";
+            } else {
+                badge.className = "inline-block px-2 py-0.5 rounded text-xs font-bold bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 my-1";
+                badge.innerText = "Optimal / Good Fit";
+                desc.innerText = "Keseimbangan baik antara fleksibilitas dan generalisasi data.";
+            }
+        }
+
+        // --- LOSS CURVE SWEEP GENERATOR ---
+        function updateLossCurveChart() {
+            const labels = [];
+            const trainLosses = [];
+            const testLosses = [];
+
+            const { trainX, trainY, testX, testY } = state.dataset;
+
+            // Parameter range sweep depending on selected algorithm
+            if (state.algo === 'decision_tree') {
+                for (let depth = 1; depth <= 12; depth++) {
+                    labels.push(`Depth ${depth}`);
+                    const m = new DecisionTreeRegressor(depth, state.hp.minSplit);
+                    m.fit(trainX, trainY);
+                    trainLosses.push(calculateMetrics(trainY, m.predict(trainX)).mse);
+                    testLosses.push(calculateMetrics(testY, m.predict(testX)).mse);
+                }
+            } else if (state.algo === 'knn') {
+                for (let k = 1; k <= 20; k += 2) {
+                    labels.push(`K=${k}`);
+                    const m = new KNNRegressor(k, state.hp.knnWeights);
+                    m.fit(trainX, trainY);
+                    trainLosses.push(calculateMetrics(trainY, m.predict(trainX)).mse);
+                    testLosses.push(calculateMetrics(testY, m.predict(testX)).mse);
+                }
+            } else if (state.algo === 'polynomial') {
+                for (let deg = 1; deg <= 8; deg++) {
+                    labels.push(`Deg ${deg}`);
+                    const m = new PolynomialRidgeRegression(deg, state.hp.alphaVal);
+                    m.fit(trainX, trainY);
+                    trainLosses.push(calculateMetrics(trainY, m.predict(trainX)).mse);
+                    testLosses.push(calculateMetrics(testY, m.predict(testX)).mse);
+                }
+            } else if (state.algo === 'random_forest') {
+                for (let trees = 1; trees <= 20; trees += 2) {
+                    labels.push(`${trees} Trees`);
+                    const m = new RandomForestRegressor(trees, state.hp.rfTreeDepth);
+                    m.fit(trainX, trainY);
+                    trainLosses.push(calculateMetrics(trainY, m.predict(trainX)).mse);
+                    testLosses.push(calculateMetrics(testY, m.predict(testX)).mse);
+                }
+            }
+
+            state.lossChart.data.labels = labels;
+            state.lossChart.data.datasets[0].data = trainLosses;
+            state.lossChart.data.datasets[1].data = testLosses;
+            state.lossChart.update();
+        }
+
+
+        // --- PYTHON CODE SNIPPET GENERATOR ---
+        function updatePythonCodeSnippet() {
+            let code = `import numpy as np\nfrom sklearn.model_selection import train_test_split\n`;
+
+            if (state.algo === 'decision_tree') {
+                code += `from sklearn.tree import DecisionTreeRegressor\n\n`;
+                code += `# Inisialisasi Model Decision Tree\nmodel = DecisionTreeRegressor(\n    max_depth=${state.hp.treeDepth},\n    min_samples_split=${state.hp.minSplit}\n)\n`;
+            } else if (state.algo === 'knn') {
+                code += `from sklearn.neighbors import KNeighborsRegressor\n\n`;
+                code += `# Inisialisasi Model KNN Regressor\nmodel = KNeighborsRegressor(\n    n_neighbors=${state.hp.kVal},\n    weights='${state.hp.knnWeights}'\n)\n`;
+            } else if (state.algo === 'polynomial') {
+                code += `from sklearn.preprocessing import PolynomialFeatures\nfrom sklearn.linear_model import Ridge\nfrom sklearn.pipeline import make_pipeline\n\n`;
+                code += `# Pipeline Polynomial Feature Expansion + Ridge Regression\nmodel = make_pipeline(\n    PolynomialFeatures(degree=${state.hp.polyDegree}),\n    Ridge(alpha=${state.hp.alphaVal})\n)\n`;
+            } else if (state.algo === 'random_forest') {
+                code += `from sklearn.ensemble import RandomForestRegressor\n\n`;
+                code += `# Inisialisasi Model Random Forest\nmodel = RandomForestRegressor(\n    n_estimators=${state.hp.numTrees},\n    max_depth=${state.hp.rfTreeDepth},\n    random_state=42\n)\n`;
+            }
+
+            code += `\n# Fit Model pada Training Data\nmodel.fit(X_train, y_train)\n`;
+            code += `predictions = model.predict(X_test)\n`;
+
+            document.getElementById('codeBlock').textContent = code;
+        }
+
+
+        // --- EVENT LISTENERS & UI BINDINGS ---
+        function attachEventListeners() {
+            // Algorithm Switching
+            document.querySelectorAll('#algoSelector .algo-btn').forEach(btn => {
+                btn.addEventListener('click', (e) => {
+                    const targetBtn = e.currentTarget;
+                    const algo = targetBtn.getAttribute('data-algo');
+                    state.algo = algo;
+
+                    // Update UI active styles
+                    document.querySelectorAll('#algoSelector .algo-btn').forEach(b => {
+                        b.className = "algo-btn p-3 text-left rounded-xl border border-slate-700 bg-slate-800/80 text-slate-400 hover:border-slate-600 transition text-xs font-medium flex flex-col gap-1";
+                    });
+                    targetBtn.className = "algo-btn active p-3 text-left rounded-xl border border-indigo-500 bg-indigo-600/20 text-indigo-200 transition text-xs font-medium flex flex-col gap-1";
+
+                    // Show corresponding HP panel
+                    document.querySelectorAll('.hp-panel').forEach(p => p.classList.add('hidden'));
+                    document.getElementById(`hp_${algo}`).classList.remove('hidden');
+
+                    updateSimulation();
+                });
+            });
+
+            // Dataset Controls
+            document.getElementById('dataPreset').addEventListener('change', (e) => {
+                state.preset = e.target.value;
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            document.getElementById('btnRegenerate').addEventListener('click', () => {
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            document.getElementById('paramDataCount').addEventListener('input', (e) => {
+                state.dataCount = parseInt(e.target.value);
+                document.getElementById('lblDataCount').innerText = state.dataCount;
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            document.getElementById('paramNoiseLevel').addEventListener('input', (e) => {
+                state.noiseLevel = parseFloat(e.target.value);
+                document.getElementById('lblNoiseLevel').innerText = state.noiseLevel;
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            document.getElementById('paramTrainRatio').addEventListener('input', (e) => {
+                const trainPct = parseInt(e.target.value);
+                state.trainRatio = trainPct / 100.0;
+                document.getElementById('lblTrainRatio').innerText = `${trainPct}% / ${100 - trainPct}%`;
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            // Decision Tree Hyperparams
+            document.getElementById('paramTreeDepth').addEventListener('input', (e) => {
+                state.hp.treeDepth = parseInt(e.target.value);
+                document.getElementById('lblTreeDepth').innerText = state.hp.treeDepth;
+                updateSimulation();
+            });
+            document.getElementById('paramMinSplit').addEventListener('input', (e) => {
+                state.hp.minSplit = parseInt(e.target.value);
+                document.getElementById('lblMinSplit').innerText = state.hp.minSplit;
+                updateSimulation();
+            });
+
+            // KNN Hyperparams
+            document.getElementById('paramKVal').addEventListener('input', (e) => {
+                state.hp.kVal = parseInt(e.target.value);
+                document.getElementById('lblKVal').innerText = state.hp.kVal;
+                updateSimulation();
+            });
+            document.getElementById('paramKnnWeights').addEventListener('change', (e) => {
+                state.hp.knnWeights = e.target.value;
+                updateSimulation();
+            });
+
+            // Polynomial Hyperparams
+            document.getElementById('paramPolyDegree').addEventListener('input', (e) => {
+                state.hp.polyDegree = parseInt(e.target.value);
+                document.getElementById('lblPolyDegree').innerText = state.hp.polyDegree;
+                updateSimulation();
+            });
+            document.getElementById('paramAlphaVal').addEventListener('input', (e) => {
+                state.hp.alphaVal = parseFloat(e.target.value);
+                document.getElementById('lblAlphaVal').innerText = state.hp.alphaVal;
+                updateSimulation();
+            });
+
+            // Random Forest Hyperparams
+            document.getElementById('paramNumTrees').addEventListener('input', (e) => {
+                state.hp.numTrees = parseInt(e.target.value);
+                document.getElementById('lblNumTrees').innerText = state.hp.numTrees;
+                updateSimulation();
+            });
+            document.getElementById('paramRfTreeDepth').addEventListener('input', (e) => {
+                state.hp.rfTreeDepth = parseInt(e.target.value);
+                document.getElementById('lblRfTreeDepth').innerText = state.hp.rfTreeDepth;
+                updateSimulation();
+            });
+
+            // Click to add Data Points on Canvas
+            const canvasEl = document.getElementById('mainPlotCanvas');
+            canvasEl.addEventListener('click', (evt) => {
+                const rect = canvasEl.getBoundingClientRect();
+                const xPixel = evt.clientX - rect.left;
+                const yPixel = evt.clientY - rect.top;
+
+                const xScale = state.mainChart.scales.x;
+                const yScale = state.mainChart.scales.y;
+
+                if (!xScale || !yScale) return;
+
+                const dataX = xScale.getValueForPixel(xPixel);
+                const dataY = yScale.getValueForPixel(yPixel);
+
+                if (dataX >= -3.2 && dataX <= 3.2) {
+                    state.customPoints.push({ x: dataX, y: dataY });
+                    document.getElementById('outlierCount').innerText = `Custom Points: ${state.customPoints.length}`;
+                    generateSyntheticData();
+                    updateSimulation();
+                }
+            });
+
+            // Clear custom points button
+            document.getElementById('btnClearCustom').addEventListener('click', () => {
+                state.customPoints = [];
+                document.getElementById('outlierCount').innerText = `Custom Points: 0`;
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            // Reset All Button
+            document.getElementById('btnResetAll').addEventListener('click', () => {
+                state.hp.treeDepth = 3;
+                state.hp.minSplit = 4;
+                state.hp.kVal = 5;
+                state.hp.polyDegree = 3;
+                state.hp.alphaVal = 0.01;
+                state.hp.numTrees = 10;
+                state.hp.rfTreeDepth = 4;
+                state.customPoints = [];
+
+                document.getElementById('paramTreeDepth').value = 3;
+                document.getElementById('lblTreeDepth').innerText = 3;
+                document.getElementById('paramMinSplit').value = 4;
+                document.getElementById('lblMinSplit').innerText = 4;
+                document.getElementById('paramKVal').value = 5;
+                document.getElementById('lblKVal').innerText = 5;
+                document.getElementById('paramPolyDegree').value = 3;
+                document.getElementById('lblPolyDegree').innerText = 3;
+                document.getElementById('paramAlphaVal').value = 0.01;
+                document.getElementById('lblAlphaVal').innerText = 0.01;
+
+                generateSyntheticData();
+                updateSimulation();
+            });
+
+            // Copy Python Code
+            document.getElementById('btnCopyCode').addEventListener('click', () => {
+                const codeText = document.getElementById('codeBlock').textContent;
+                const textArea = document.createElement('textarea');
+                textArea.value = codeText;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+
+                const btn = document.getElementById('btnCopyCode');
+                btn.innerHTML = `<i class="fa-solid fa-check text-emerald-400"></i> Copied!`;
+                setTimeout(() => {
+                    btn.innerHTML = `<i class="fa-solid fa-copy"></i> Copy`;
+                }, 1500);
+            });
+        }
+
+        // --- APP INITIALIZATION ---
+        window.addEventListener('DOMContentLoaded', () => {
+            initCharts();
+            generateSyntheticData();
+            attachEventListeners();
+            updateSimulation();
+        });
+    </script>
+</body>
+</html>
