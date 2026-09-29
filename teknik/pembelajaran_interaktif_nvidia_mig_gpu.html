@@ -1,0 +1,654 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Pembelajaran Interaktif Multi-Instance GPU (NVIDIA MIG)</title>
+
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- FontAwesome Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nvidia: '#76B900',
+                        nvdark: '#111827',
+                        cardbg: '#1E293B',
+                        migblue: '#3B82F6',
+                        migpurple: '#8B5CF6',
+                        migamber: '#F59E0B',
+                        miggreen: '#10B981',
+                        migpink: '#EC4899',
+                        migcyan: '#06B6D4',
+                        migorange: '#F97316'
+                    }
+                }
+            }
+        }
+    </script>
+
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.4; transform: scale(1); }
+            50% { opacity: 0.9; transform: scale(1.02); }
+        }
+        @keyframes scanline {
+            0% { transform: translateY(-100%); }
+            100% { transform: translateY(1000%); }
+        }
+        .glow-active {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+        .slice-card {
+            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        .slice-card:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 10px 25px -5px rgba(118, 185, 0, 0.3);
+        }
+        .custom-scrollbar::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        .custom-scrollbar::-webkit-scrollbar-track {
+            background: #0f172a;
+        }
+        .custom-scrollbar::-webkit-scrollbar-thumb {
+            background: #334155;
+            border-radius: 4px;
+        }
+    </style>
+</head>
+<body class="bg-slate-950 text-slate-100 font-sans min-h-screen flex flex-col custom-scrollbar">
+
+    <!-- Header Navbar -->
+    <header class="bg-slate-900 border-b border-slate-800 sticky top-0 z-50 backdrop-blur-md bg-opacity-90">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-col md:flex-row justify-between items-center gap-3">
+            <div class="flex items-center space-x-3">
+                <div class="bg-nvidia text-black p-2.5 rounded-xl font-extrabold text-xl flex items-center shadow-lg shadow-nvidia/20">
+                    <i class="fa-solid fa-cubes mr-2"></i> MIG Lab
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg text-white leading-tight">Dasar Multi-Instance GPU (NVIDIA MIG)</h1>
+                    <p class="text-xs text-slate-400">Panduan Interaktif Partisi Hardware, Isolasi VRAM & Fault Tolerance GPU AI</p>
+                </div>
+            </div>
+
+            <!-- Tab Navigation -->
+            <nav class="flex flex-wrap gap-1 text-xs font-semibold">
+                <button onclick="setTab('concept')" id="tab-btn-concept" class="tab-btn px-3.5 py-2 rounded-lg bg-slate-800 text-nvidia border border-nvidia/40">
+                    <i class="fa-solid fa-book-open mr-1.5"></i> 1. Konsep & Anotasi
+                </button>
+                <button onclick="setTab('die')" id="tab-btn-die" class="tab-btn px-3.5 py-2 rounded-lg hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-microchip mr-1.5"></i> 2. Silikon GPU Die
+                </button>
+                <button onclick="setTab('compare')" id="tab-btn-compare" class="tab-btn px-3.5 py-2 rounded-lg hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-code-compare mr-1.5"></i> 3. Time-Slicing vs MIG
+                </button>
+                <button onclick="setTab('sim')" id="tab-btn-sim" class="tab-btn px-3.5 py-2 rounded-lg hover:bg-slate-800 text-slate-300">
+                    <i class="fa-solid fa-vial-circle-check mr-1.5"></i> 4. Lab Workload & Failover
+                </button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Content Area -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- TAB 1: KONSEP DASAR MIG & ANOTASI PROFIL -->
+        <section id="tab-concept" class="tab-content space-y-6">
+            <!-- Introduction Card -->
+            <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-2xl relative overflow-hidden">
+                <div class="absolute top-0 right-0 p-8 opacity-10 pointer-events-none">
+                    <i class="fa-solid fa-layer-group text-9xl text-nvidia"></i>
+                </div>
+                <div class="max-w-3xl space-y-3">
+                    <span class="bg-nvidia/20 text-nvidia text-xs font-bold px-3 py-1 rounded-full border border-nvidia/40 uppercase tracking-wider">
+                        Teknologi Utama Enterprise GPU
+                    </span>
+                    <h2 class="text-3xl font-extrabold text-white">Apa itu Multi-Instance GPU (MIG)?</h2>
+                    <p class="text-slate-300 text-sm leading-relaxed">
+                        **Multi-Instance GPU (MIG)** adalah fitur arsitektur hardware (diperkenalkan sejak arsitektur NVIDIA Ampere A100 & Hopper H100) yang memungkinkan 1 fisik GPU raksasa diisolasi secara hardware menjadi hingga **7 Instance GPU terpisah yang mandiri**.
+                    </p>
+                    <p class="text-slate-400 text-xs leading-relaxed">
+                        Setiap *instance* memiliki **sumber daya perangkat keras yang terjamin** (Streaming Multiprocessor/SM, L2 Cache, Memory Controller, dan VRAM khusus). Tidak ada saling perebutan daya komputasi (*Noisy Neighbor*) antar tenant.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Key Features Grid -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-blue-500/20 text-blue-400 flex items-center justify-center text-lg font-bold mb-3">
+                        <i class="fa-solid fa-shield-halved"></i>
+                    </div>
+                    <h3 class="font-bold text-white text-base">1. Hardware Level Isolation</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Partisi terjadi di tingkat silikon fisik, bukan sekadar software driver. Memori L2 Cache dan Crossbar Bus dipisah secara tegas.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-emerald-500/20 text-emerald-400 flex items-center justify-center text-lg font-bold mb-3">
+                        <i class="fa-solid fa-gauge-high"></i>
+                    </div>
+                    <h3 class="font-bold text-white text-base">2. Guaranteed Quality of Service (QoS)</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Performa dan latensi setiap *instance* 100% konsisten dan terprediksi, sangat ideal untuk inferensi AI berlatensi rendah.
+                    </p>
+                </div>
+
+                <div class="bg-slate-900/90 p-5 rounded-xl border border-slate-800 space-y-2">
+                    <div class="w-10 h-10 rounded-lg bg-purple-500/20 text-purple-400 flex items-center justify-center text-lg font-bold mb-3">
+                        <i class="fa-solid fa-bug-slash"></i>
+                    </div>
+                    <h3 class="font-bold text-white text-base">3. Fault & Error Isolation</h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        Jika aplikasi pada Instance 1 mengalami *Out-Of-Memory (OOM)* atau *kernel crash*, 6 instance lainnya TETAP BERJALAN tanpa terganggu.
+                    </p>
+                </div>
+            </div>
+
+            <!-- Interactive Profile Naming Nomenclature -->
+            <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 space-y-4">
+                <h3 class="text-lg font-bold text-white flex items-center">
+                    <i class="fa-solid fa-tag text-nvidia mr-2"></i> Cara Membaca Penamaan Profil MIG (Contoh: <span class="text-nvidia font-mono ml-1">mig-3g.40gb</span>)
+                </h3>
+                <p class="text-xs text-slate-300">
+                    Arahkan kursor atau sentuh bagian anotasi profil berikut untuk mempelajari komponen di baliknya:
+                </p>
+
+                <!-- Interactive Anatomical Diagram -->
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col md:flex-row justify-center items-center gap-4 text-center font-mono">
+                    
+                    <!-- Compute Part -->
+                    <div onclick="showNomenclature('compute')" class="cursor-pointer p-4 rounded-xl bg-slate-900 border border-blue-500/50 hover:bg-blue-950/40 transition group w-full md:w-auto">
+                        <span class="text-2xl font-black text-blue-400 group-hover:scale-110 block transition">3g</span>
+                        <span class="text-[11px] text-slate-400 uppercase font-sans">GPU Compute Slices</span>
+                        <p class="text-[10px] text-blue-300 font-sans mt-1">3/7 Total SM Cluster</p>
+                    </div>
+
+                    <span class="text-2xl text-slate-600 font-bold hidden md:inline">.</span>
+
+                    <!-- Memory Part -->
+                    <div onclick="showNomenclature('memory')" class="cursor-pointer p-4 rounded-xl bg-slate-900 border border-purple-500/50 hover:bg-purple-950/40 transition group w-full md:w-auto">
+                        <span class="text-2xl font-black text-purple-400 group-hover:scale-110 block transition">40gb</span>
+                        <span class="text-[11px] text-slate-400 uppercase font-sans">Frame Buffer VRAM</span>
+                        <p class="text-[10px] text-purple-300 font-sans mt-1">40 GB Dedicated HBM2e</p>
+                    </div>
+
+                    <span class="text-2xl text-slate-600 font-bold hidden md:inline">-</span>
+
+                    <!-- Profile Code -->
+                    <div onclick="showNomenclature('profile')" class="cursor-pointer p-4 rounded-xl bg-slate-900 border border-emerald-500/50 hover:bg-emerald-950/40 transition group w-full md:w-auto">
+                        <span class="text-2xl font-black text-emerald-400 group-hover:scale-110 block transition">1g.10gb</span>
+                        <span class="text-[11px] text-slate-400 uppercase font-sans">Instance Terkecil</span>
+                        <p class="text-[10px] text-emerald-300 font-sans mt-1">1/7 Partisi GPU (Maks 7 Slice)</p>
+                    </div>
+                </div>
+
+                <!-- Nomenclature Detail Box -->
+                <div id="nom-detail-box" class="bg-slate-900 p-4 rounded-xl border border-slate-800 text-xs text-slate-300 leading-relaxed">
+                    <span class="text-nvidia font-bold">Petunjuk:</span> Klik salah satu kotak komponen penamaan di atas untuk penjelasan mendalam.
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 2: SILIKON GPU DIE & INTERACTION BUILDER -->
+        <section id="tab-die" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-2xl space-y-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-white flex items-center">
+                            <i class="fa-solid fa-microchip text-nvidia mr-3"></i> Peta Silikon GPU & Visualizer MIG Partition
+                        </h2>
+                        <p class="text-xs text-slate-400 mt-1">
+                            Simulasi GPU NVIDIA A100 (80GB VRAM / 7 Compute Slices / 8 Memory Crossbar Slices).
+                        </p>
+                    </div>
+
+                    <!-- Preset Selector Buttons -->
+                    <div class="flex flex-wrap gap-2 text-xs">
+                        <button onclick="applyDiePreset('full')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-blue-400 rounded-lg border border-blue-500/30 transition">
+                            1x Full (7g.80gb)
+                        </button>
+                        <button onclick="applyDiePreset('balanced')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-purple-400 rounded-lg border border-purple-500/30 transition">
+                            2x Medium (3g.40gb)
+                        </button>
+                        <button onclick="applyDiePreset('max')" class="px-3 py-2 bg-slate-800 hover:bg-slate-700 text-emerald-400 rounded-lg border border-emerald-500/30 transition">
+                            7x Max Split (1g.10gb)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Physical Silicon Layout Graphic -->
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-6 relative">
+                    <div class="text-center text-xs font-mono text-slate-500 uppercase tracking-widest">
+                        NVIDIA Silicon Physical Die Layout (GPC / SM Array & Crossbar Switch)
+                    </div>
+
+                    <!-- GPU Compute Slices Grid (7 GPCs) -->
+                    <div>
+                        <div class="flex justify-between items-center text-xs text-slate-400 mb-2 font-mono">
+                            <span>COMPUTE CLUSTER (7 Physical GPCs):</span>
+                            <span id="active-instance-label" class="text-nvidia font-bold">7 Instances Active</span>
+                        </div>
+                        <div id="die-compute-container" class="grid grid-cols-7 gap-2 min-h-[140px]">
+                            <!-- Generated dynamically via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Memory Crossbar & L2 Cache Layer -->
+                    <div class="border-t border-slate-800 pt-4">
+                        <div class="flex justify-between items-center text-xs text-slate-400 mb-2 font-mono">
+                            <span>ISOLATED L2 CACHE & HBM MEMORY CROSSBAR (8 Memory Controllers):</span>
+                        </div>
+                        <div id="die-memory-container" class="grid grid-cols-8 gap-2 min-h-[50px]">
+                            <!-- Generated dynamically via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Details Panel for Selected Instance -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-3">
+                    <h3 class="text-sm font-bold text-white flex items-center">
+                        <i class="fa-solid fa-circle-info text-amber-400 mr-2"></i> Detail Spesifikasi Partisi Silikon Terpilih
+                    </h3>
+                    <div id="die-instance-details" class="grid grid-cols-1 sm:grid-cols-4 gap-3 text-xs">
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-500 block">Profil Name</span>
+                            <span class="font-bold text-nvidia text-sm" id="detail-name">mig-1g.10gb</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-500 block">Streaming Multiprocessors</span>
+                            <span class="font-bold text-blue-400 text-sm" id="detail-sm">14 SMs (~1 GPC)</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-500 block">Dedicated VRAM</span>
+                            <span class="font-bold text-purple-400 text-sm" id="detail-vram">10 GB HBM2e</span>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800">
+                            <span class="text-slate-500 block">Memory Bandwidth</span>
+                            <span class="font-bold text-emerald-400 text-sm" id="detail-bw">~250 GB/s</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 3: TIME-SLICING VS MIG COMPARISON -->
+        <section id="tab-compare" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-2xl space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-code-compare text-nvidia mr-3"></i> Perbandingan: Time-Slicing vs MIG Hardware Partitioning
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Pahami perbedaan mendasar antara membagi GPU secara software (Time-Slicing) vs membagi GPU secara hardware (MIG).
+                    </p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- Left: Time Slicing -->
+                    <div class="bg-slate-900/90 rounded-2xl p-5 border border-red-500/40 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-red-400 text-base"><i class="fa-solid fa-clock mr-2"></i> Shared GPU (Time-Slicing / Software)</span>
+                                <span class="text-[10px] bg-red-950 text-red-300 border border-red-800 px-2 py-0.5 rounded">Unpredictable</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                Semua proses aplikasi mengantre waktu giliran (*time slices*) untuk mengakses CUDA Cores & VRAM yang sama.
+                            </p>
+
+                            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
+                                <div class="flex items-center text-red-300">
+                                    <i class="fa-solid fa-triangle-exclamation mr-2 text-red-400"></i>
+                                    <span><strong>Noisy Neighbor:</strong> Jika Process A melakukan perkalian matriks LLM berat, Process B akan mengalami *lag spike*.</span>
+                                </div>
+                                <div class="flex items-center text-red-300">
+                                    <i class="fa-solid fa-bomb mr-2 text-red-400"></i>
+                                    <span><strong>Shared Memory Failure:</strong> Jika Process A kehabisan VRAM (OOM), seluruh GPU bisa mengalami *Reset Kernel*!</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="simulateComparison('timeslice')" class="w-full py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-xs rounded-xl transition flex items-center justify-center">
+                            <i class="fa-solid fa-play mr-2"></i> Simulasi Noisy Neighbor & Crash
+                        </button>
+                    </div>
+
+                    <!-- Right: MIG Hardware Partitioning -->
+                    <div class="bg-slate-900/90 rounded-2xl p-5 border border-nvidia/50 space-y-4 flex flex-col justify-between">
+                        <div class="space-y-3">
+                            <div class="flex justify-between items-center">
+                                <span class="font-bold text-nvidia text-base"><i class="fa-solid fa-shield-cat mr-2"></i> NVIDIA MIG (Hardware Partitioning)</span>
+                                <span class="text-[10px] bg-emerald-950 text-nvidia border border-nvidia/60 px-2 py-0.5 rounded">Deterministic</span>
+                            </div>
+                            <p class="text-xs text-slate-300 leading-relaxed">
+                                GPU dipisah secara silikon fisik. Setiap instance memiliki memory pipeline, L2 cache, dan SM controller terisolasi.
+                            </p>
+
+                            <div class="bg-slate-950 p-3 rounded-xl border border-slate-800 text-xs space-y-2">
+                                <div class="flex items-center text-emerald-300">
+                                    <i class="fa-solid fa-check-circle mr-2 text-nvidia"></i>
+                                    <span><strong>Zero Latency Cross-talk:</strong> Beban kerja pada Instance 1 sama sekali tidak memengaruhi latensi Instance 2.</span>
+                                </div>
+                                <div class="flex items-center text-emerald-300">
+                                    <i class="fa-solid fa-lock mr-2 text-nvidia"></i>
+                                    <span><strong>Fault Isolation:</strong> Jika Process A mengalami OOM, Instance 2 TETAP BERJALAN 100% normal.</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <button onclick="simulateComparison('mig')" class="w-full py-2.5 bg-nvidia hover:bg-emerald-500 text-black font-bold text-xs rounded-xl transition flex items-center justify-center">
+                            <i class="fa-solid fa-play mr-2"></i> Simulasi Isolasi Performa MIG
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Simulation Output Terminal -->
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 space-y-2 font-mono text-xs">
+                    <div class="flex justify-between items-center text-slate-400">
+                        <span><i class="fa-solid fa-terminal mr-2"></i> Execution Log Console</span>
+                        <button onclick="clearConsole()" class="text-[10px] text-slate-500 hover:text-slate-300">Clear</button>
+                    </div>
+                    <div id="compare-console" class="h-32 overflow-y-auto bg-slate-900/80 p-3 rounded-lg text-slate-300 space-y-1">
+                        [System] Klik tombol simulasi di atas untuk melihat perbedaan eksekusi...
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- TAB 4: WORKLOAD SIMULATOR & FAILOVER LAB -->
+        <section id="tab-sim" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-2xl p-6 border border-slate-800 shadow-2xl space-y-6">
+                <div>
+                    <h2 class="text-2xl font-bold text-white flex items-center">
+                        <i class="fa-solid fa-vial-circle-check text-nvidia mr-3"></i> Laboratorium Workload Multi-Tenant & Failover
+                    </h2>
+                    <p class="text-xs text-slate-400 mt-1">
+                        Jalankan beban kerja berbedasarkan profil MIG (`1g.10gb`, `2g.20gb`, `3g.40gb`), lalu picu skenario kegagalan (*OOM Error*).
+                    </p>
+                </div>
+
+                <!-- Instance Workload Control Grid -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    
+                    <!-- Instance 1 -->
+                    <div class="bg-slate-900 p-4 rounded-xl border border-blue-500/40 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-blue-400">Instance 1: mig-1g.10gb</span>
+                            <span id="status-tag-1" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px]">IDLE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Task: <strong>Micro-LLM Inference (Phi-3)</strong></div>
+                        <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="prog-1" class="bg-blue-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="startInstanceTask(1)" class="flex-1 py-1.5 bg-blue-600 hover:bg-blue-500 text-white font-semibold text-xs rounded transition">
+                                Start Task
+                            </button>
+                            <button onclick="crashInstance(1)" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition" title="Trigger OOM">
+                                <i class="fa-solid fa-bomb"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Instance 2 -->
+                    <div class="bg-slate-900 p-4 rounded-xl border border-purple-500/40 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-purple-400">Instance 2: mig-2g.20gb</span>
+                            <span id="status-tag-2" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px]">IDLE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Task: <strong>ResNet-50 Vision Training</strong></div>
+                        <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="prog-2" class="bg-purple-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="startInstanceTask(2)" class="flex-1 py-1.5 bg-purple-600 hover:bg-purple-500 text-white font-semibold text-xs rounded transition">
+                                Start Task
+                            </button>
+                            <button onclick="crashInstance(2)" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition" title="Trigger OOM">
+                                <i class="fa-solid fa-bomb"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                    <!-- Instance 3 -->
+                    <div class="bg-slate-900 p-4 rounded-xl border border-emerald-500/40 space-y-3">
+                        <div class="flex justify-between items-center text-xs">
+                            <span class="font-bold text-emerald-400">Instance 3: mig-3g.40gb</span>
+                            <span id="status-tag-3" class="bg-slate-800 text-slate-400 px-2 py-0.5 rounded text-[10px]">IDLE</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">Task: <strong>LLaMA-3 Fine-Tuning (LoRA)</strong></div>
+                        <div class="w-full bg-slate-950 h-2.5 rounded-full overflow-hidden border border-slate-800">
+                            <div id="prog-3" class="bg-emerald-500 h-full w-0 transition-all duration-300"></div>
+                        </div>
+                        <div class="flex space-x-2">
+                            <button onclick="startInstanceTask(3)" class="flex-1 py-1.5 bg-emerald-600 hover:bg-emerald-500 text-white font-semibold text-xs rounded transition">
+                                Start Task
+                            </button>
+                            <button onclick="crashInstance(3)" class="px-3 py-1.5 bg-red-600/80 hover:bg-red-600 text-white text-xs rounded transition" title="Trigger OOM">
+                                <i class="fa-solid fa-bomb"></i>
+                            </button>
+                        </div>
+                    </div>
+
+                </div>
+
+                <!-- Live Metrics Summary -->
+                <div class="bg-slate-950 p-5 rounded-xl border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                    <div>
+                        <span class="text-[10px] text-slate-500 block uppercase">Total VRAM Allocation</span>
+                        <span class="text-xl font-black text-white">70 GB / 80 GB</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block uppercase">Hardware Health Status</span>
+                        <span id="health-status" class="text-xl font-black text-nvidia">100% HEALTHY</span>
+                    </div>
+                    <div>
+                        <span class="text-[10px] text-slate-500 block uppercase">Active MIG Instances</span>
+                        <span class="text-xl font-black text-amber-400">3 Isolated Slices</span>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-slate-900 border-t border-slate-800 py-4 text-center text-xs text-slate-500">
+        Informatics Engineering Lab | NVIDIA Multi-Instance GPU (MIG) Educational Canvas
+    </footer>
+
+    <!-- JavaScript Application Logic -->
+    <script>
+        // State Management
+        let currentDiePreset = 'max';
+        
+        const migDataProfiles = {
+            'full': [
+                { id: 1, name: 'mig-7g.80gb', slices: 7, memGB: 80, smCount: 98, color: 'bg-blue-600', border: 'border-blue-400', textColor: 'text-blue-300' }
+            ],
+            'balanced': [
+                { id: 1, name: 'mig-3g.40gb (A)', slices: 3, memGB: 40, smCount: 42, color: 'bg-purple-600', border: 'border-purple-400', textColor: 'text-purple-300' },
+                { id: 2, name: 'mig-3g.40gb (B)', slices: 3, memGB: 40, smCount: 42, color: 'bg-amber-600', border: 'border-amber-400', textColor: 'text-amber-300' },
+                { id: 3, name: 'mig-1g.10gb (C)', slices: 1, memGB: 10, smCount: 14, color: 'bg-emerald-600', border: 'border-emerald-400', textColor: 'text-emerald-300' }
+            ],
+            'max': [
+                { id: 1, name: 'mig-1g.10gb (A)', slices: 1, memGB: 10, smCount: 14, color: 'bg-blue-600', border: 'border-blue-400', textColor: 'text-blue-300' },
+                { id: 2, name: 'mig-1g.10gb (B)', slices: 1, memGB: 10, smCount: 14, color: 'bg-purple-600', border: 'border-purple-400', textColor: 'text-purple-300' },
+                { id: 3, name: 'mig-1g.10gb (C)', slices: 1, memGB: 10, smCount: 14, color: 'bg-amber-600', border: 'border-amber-400', textColor: 'text-amber-300' },
+                { id: 4, name: 'mig-1g.10gb (D)', slices: 1, memGB: 10, smCount: 14, color: 'bg-emerald-600', border: 'border-emerald-400', textColor: 'text-emerald-300' },
+                { id: 5, name: 'mig-1g.10gb (E)', slices: 1, memGB: 10, smCount: 14, color: 'bg-pink-600', border: 'border-pink-400', textColor: 'text-pink-300' },
+                { id: 6, name: 'mig-1g.10gb (F)', slices: 1, memGB: 10, smCount: 14, color: 'bg-cyan-600', border: 'border-cyan-400', textColor: 'text-cyan-300' },
+                { id: 7, name: 'mig-1g.10gb (G)', slices: 1, memGB: 10, smCount: 14, color: 'bg-orange-600', border: 'border-orange-400', textColor: 'text-orange-300' }
+            ]
+        };
+
+        // Tab Switching Logic
+        function setTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('bg-slate-800', 'text-nvidia', 'border', 'border-nvidia/40');
+                btn.classList.add('hover:bg-slate-800', 'text-slate-300');
+            });
+
+            document.getElementById(`tab-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-btn-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-slate-800', 'text-nvidia', 'border', 'border-nvidia/40');
+                activeBtn.classList.remove('hover:bg-slate-800', 'text-slate-300');
+            }
+        }
+
+        // Nomenclature Explanation Detail
+        function showNomenclature(type) {
+            const box = document.getElementById('nom-detail-box');
+            if (type === 'compute') {
+                box.innerHTML = `<span class="text-blue-400 font-bold">3g (GPU Compute Slices):</span> Menunjukkan instance ini mengalokasikan 3 dari 7 kelompok Compute Cluster (SM/GPC) fisik pada GPU.`;
+            } else if (type === 'memory') {
+                box.innerHTML = `<span class="text-purple-400 font-bold">40gb (Dedicated VRAM):</span> Instance ini dijamin mendapatkan memori terisolasi sebesar 40 GB HBM2e dengan L2 Cache khusus.`;
+            } else if (type === 'profile') {
+                box.innerHTML = `<span class="text-emerald-400 font-bold">1g.10gb (MIG Profile Slice):</span> Merupakan ukuran instance MIG paling dasar pada NVIDIA A100 (1/7 kekuatan komputasi & VRAM).`;
+            }
+        }
+
+        // Silicon Die Render Function
+        function renderSiliconDie() {
+            const computeContainer = document.getElementById('die-compute-container');
+            const memoryContainer = document.getElementById('die-memory-container');
+            const label = document.getElementById('active-instance-label');
+
+            if (!computeContainer || !memoryContainer) return;
+
+            computeContainer.innerHTML = '';
+            memoryContainer.innerHTML = '';
+
+            const activeInstances = migDataProfiles[currentDiePreset];
+            label.innerText = `${activeInstances.length} Instance MIG Active`;
+
+            activeInstances.forEach((inst, idx) => {
+                const colSpanClass = `col-span-${inst.slices}`;
+                
+                // Compute Cluster Card
+                const card = document.createElement('div');
+                card.className = `${colSpanClass} slice-card ${inst.color} p-3 rounded-xl border ${inst.border} flex flex-col justify-between cursor-pointer shadow-lg`;
+                card.onclick = () => selectInstanceDetails(inst);
+                card.innerHTML = `
+                    <div class="flex justify-between items-center text-xs font-bold text-white">
+                        <span>${inst.name}</span>
+                        <span class="bg-black/30 text-[9px] px-1.5 py-0.5 rounded"><i class="fa-solid fa-lock mr-1"></i>Isolated</span>
+                    </div>
+                    <div class="my-2 space-y-0.5 text-[11px] text-white/80 font-mono">
+                        <div>SM Slices: ${inst.slices} / 7 Cluster</div>
+                        <div>VRAM: ${inst.memGB} GB Dedicated</div>
+                    </div>
+                    <div class="text-[10px] text-white/60 font-mono text-right">Click for info</div>
+                `;
+                computeContainer.appendChild(card);
+
+                // Memory Crossbar Controller Boxes
+                const memSlicesCount = Math.round((inst.memGB / 80) * 8);
+                for (let m = 0; m < memSlicesCount; m++) {
+                    const memBox = document.createElement('div');
+                    memBox.className = `${inst.color} border ${inst.border} rounded-md h-10 opacity-80 flex items-center justify-center text-[10px] font-mono font-bold text-white/80`;
+                    memBox.innerText = `HBM`;
+                    memoryContainer.appendChild(memBox);
+                }
+            });
+
+            // Select first instance by default for details panel
+            if (activeInstances.length > 0) {
+                selectInstanceDetails(activeInstances[0]);
+            }
+        }
+
+        function selectInstanceDetails(inst) {
+            document.getElementById('detail-name').innerText = inst.name;
+            document.getElementById('detail-sm').innerText = `${inst.smCount} SMs (${inst.slices} GPC)`;
+            document.getElementById('detail-vram').innerText = `${inst.memGB} GB HBM2e`;
+            document.getElementById('detail-bw').innerText = `~${inst.slices * 250} GB/sec`;
+        }
+
+        function applyDiePreset(presetKey) {
+            currentDiePreset = presetKey;
+            renderSiliconDie();
+        }
+
+        // Section 3: Time-Slicing vs MIG Simulation Logic
+        function simulateComparison(type) {
+            const consoleEl = document.getElementById('compare-console');
+            
+            if (type === 'timeslice') {
+                consoleEl.innerHTML += `<br/><span class="text-red-400">[SHARED GPU] Running Task A (Matrix Multiply) & Task B (Video Inference)...</span>`;
+                setTimeout(() => {
+                    consoleEl.innerHTML += `<br/><span class="text-amber-400">[WARNING] Process A spikes L2 Cache usage to 98%. Process B latency spikes +450ms! (Noisy Neighbor)</span>`;
+                }, 600);
+                setTimeout(() => {
+                    consoleEl.innerHTML += `<br/><span class="text-red-500 font-bold">[CRASH] Process A triggered Out-Of-Memory (OOM)! Driver resets entire GPU. Process B TERMINATED!</span>`;
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }, 1400);
+            } else {
+                consoleEl.innerHTML += `<br/><span class="text-nvidia">[MIG ISOLATED] Running Task A (Instance 1) & Task B (Instance 2)...</span>`;
+                setTimeout(() => {
+                    consoleEl.innerHTML += `<br/><span class="text-emerald-400">[INFO] Instance 1 operating at 100% SM capacity. Instance 2 latency remains rock-solid (0ms variance).</span>`;
+                }, 600);
+                setTimeout(() => {
+                    consoleEl.innerHTML += `<br/><span class="text-blue-400 font-bold">[MIG SUCCESS] Instance 1 experienced OOM crash. Instance 2 is 100% UNTOUCHED and continuing execution!</span>`;
+                    consoleEl.scrollTop = consoleEl.scrollHeight;
+                }, 1400);
+            }
+        }
+
+        function clearConsole() {
+            document.getElementById('compare-console').innerText = '[System] Console cleared.';
+        }
+
+        // Section 4: Workload Simulator & Failover Logic
+        function startInstanceTask(id) {
+            const prog = document.getElementById(`prog-${id}`);
+            const tag = document.getElementById(`status-tag-${id}`);
+
+            tag.className = "bg-emerald-900 text-emerald-300 px-2 py-0.5 rounded text-[10px] font-bold";
+            tag.innerText = "RUNNING";
+
+            let width = 0;
+            const interval = setInterval(() => {
+                width += 10;
+                prog.style.width = `${width}%`;
+
+                if (width >= 100) {
+                    clearInterval(interval);
+                    tag.className = "bg-blue-900 text-blue-300 px-2 py-0.5 rounded text-[10px] font-bold";
+                    tag.innerText = "COMPLETED";
+                }
+            }, 200);
+        }
+
+        function crashInstance(id) {
+            const prog = document.getElementById(`prog-${id}`);
+            const tag = document.getElementById(`status-tag-${id}`);
+            const health = document.getElementById('health-status');
+
+            prog.style.width = '100%';
+            prog.className = 'bg-red-600 h-full w-full';
+
+            tag.className = "bg-red-900 text-red-300 px-2 py-0.5 rounded text-[10px] font-bold animate-pulse";
+            tag.innerText = "CRASHED (OOM)";
+
+            health.innerText = "MIG ISOLATION PROTECTING SYSTEM";
+            health.className = "text-xl font-black text-amber-400";
+        }
+
+        // Initialize on window load
+        window.onload = function() {
+            renderSiliconDie();
+        };
+    </script>
+</body>
+</html>
