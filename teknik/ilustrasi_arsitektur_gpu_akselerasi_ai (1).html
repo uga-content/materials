@@ -1,0 +1,934 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Visualisasi Arsitektur GPU & Pelatihan LLM - COA & AI Acceleration</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        nvidia: '#76B900',
+                        intel: '#0071C5',
+                        cuda: '#10B981',
+                        tensor: '#EC4899',
+                        darkbg: '#0F172A',
+                        cardbg: '#1E293B',
+                    }
+                }
+            }
+        }
+    </script>
+    <style>
+        @keyframes pulse-glow {
+            0%, 100% { opacity: 0.3; transform: scale(1); }
+            50% { opacity: 0.8; transform: scale(1.03); }
+        }
+        @keyframes flow-gradient {
+            0% { background-position: 0% 50%; }
+            50% { background-position: 100% 50%; }
+            100% { background-position: 0% 50%; }
+        }
+        .glow-effect {
+            animation: pulse-glow 2s infinite ease-in-out;
+        }
+        .core-active {
+            background-color: #10B981 !important;
+            box-shadow: 0 0 8px #10B981;
+        }
+        .tensor-active {
+            background-color: #EC4899 !important;
+            box-shadow: 0 0 10px #EC4899;
+        }
+        .core-cpu-active {
+            background-color: #3B82F6 !important;
+            box-shadow: 0 0 12px #3B82F6;
+        }
+        .flow-bg {
+            background: linear-gradient(-45deg, #0f172a, #1e1b4b, #064e3b, #1e293b);
+            background-size: 400% 400%;
+            animation: flow-gradient 15s ease infinite;
+        }
+    </style>
+</head>
+<body class="bg-darkbg text-slate-100 font-sans min-h-screen flex flex-col">
+
+    <!-- Header Navigation -->
+    <header class="bg-cardbg/95 backdrop-blur border-b border-slate-700 sticky top-0 z-50 shadow-lg">
+        <div class="max-w-7xl mx-auto px-4 py-3 flex flex-wrap justify-between items-center">
+            <div class="flex items-center space-x-3">
+                <div class="bg-nvidia text-black p-2 rounded-lg font-bold text-xl flex items-center shadow-md">
+                    <i class="fa-solid fa-microchip mr-2"></i> GPU & LLM AI
+                </div>
+                <div>
+                    <h1 class="font-bold text-lg leading-tight">GPU Acceleration & Pelatihan LLM</h1>
+                    <p class="text-xs text-slate-400">Arsitektur Komputer, Tensor Cores, & Parallel Training Large Language Models</p>
+                </div>
+            </div>
+            <nav class="flex flex-wrap gap-1 mt-2 lg:mt-0 text-xs sm:text-sm font-medium">
+                <button onclick="switchTab('arch')" id="tab-arch" class="tab-btn px-3 py-2 rounded-lg bg-slate-700 text-white">1. CPU vs GPU</button>
+                <button onclick="switchTab('cuda')" id="tab-cuda" class="tab-btn px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300">2. CUDA & Tensor Core</button>
+                <button onclick="switchTab('attention')" id="tab-attention" class="tab-btn px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300">3. Matriks & Attention LLM</button>
+                <button onclick="switchTab('llm-train')" id="tab-llm-train" class="tab-btn px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300">4. Alur Pelatihan LLM</button>
+                <button onclick="switchTab('parallel')" id="tab-parallel" class="tab-btn px-3 py-2 rounded-lg hover:bg-slate-700 text-slate-300 border border-nvidia/40">5. Multi-GPU Cluster</button>
+            </nav>
+        </div>
+    </header>
+
+    <!-- Main Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto p-4 sm:p-6 space-y-6">
+
+        <!-- SECTION 1: CPU vs GPU ARCHITECTURE -->
+        <section id="sec-arch" class="tab-content block space-y-6">
+            <div class="bg-cardbg rounded-xl p-6 border border-slate-700 shadow-xl">
+                <h2 class="text-2xl font-bold text-nvidia mb-2 flex items-center">
+                    <i class="fa-solid fa-layer-group mr-3"></i> Perbandingan Arsitektur: CPU vs GPU untuk AI
+                </h2>
+                <p class="text-slate-300 text-sm mb-6">
+                    CPU didesain untuk **latensi rendah pada pemrosesan sekuensial kompleks** (banyak Control Logic & Cache), sedangkan GPU didesain untuk **throughput tinggi & pemrosesan paralel masif** (ribuan ALU kecil).
+                </p>
+
+                <!-- Comparison Interactive Diagram -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- CPU Box -->
+                    <div class="bg-slate-900/80 rounded-xl p-5 border border-blue-500/40 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-blue-400 flex items-center">
+                                <i class="fa-solid fa-server mr-2"></i> Central Processing Unit (CPU)
+                            </h3>
+                            <span class="text-xs bg-blue-900/60 text-blue-300 px-2 py-1 rounded border border-blue-700">Latency-Optimized</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Sedikit Core (~4–64 Core) berkecepatan tinggi, Control Unit rumit, dan Memory Cache L1/L2/L3 berukuran sangat besar.</p>
+
+                        <!-- CPU Physical Layout Visual -->
+                        <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-3">
+                            <div class="bg-amber-600/30 border border-amber-500/50 p-2 rounded text-center text-xs font-semibold text-amber-300">
+                                Control Unit & Branch Prediction (Kompleks)
+                            </div>
+                            <div class="bg-indigo-900/40 border border-indigo-700/50 p-3 rounded text-center text-xs font-semibold text-indigo-300">
+                                Large Cache (L1, L2, L3 SRAM Memory)
+                            </div>
+                            <div class="grid grid-cols-4 gap-2 pt-2">
+                                <div id="cpu-core-0" class="cpu-core bg-blue-600/40 border border-blue-400 rounded h-14 flex flex-col items-center justify-center text-xs text-blue-200 transition-all">
+                                    <span class="font-bold">Core 1</span>
+                                    <span class="text-[10px] text-slate-400">ALU+FPU</span>
+                                </div>
+                                <div id="cpu-core-1" class="cpu-core bg-blue-600/40 border border-blue-400 rounded h-14 flex flex-col items-center justify-center text-xs text-blue-200 transition-all">
+                                    <span class="font-bold">Core 2</span>
+                                    <span class="text-[10px] text-slate-400">ALU+FPU</span>
+                                </div>
+                                <div id="cpu-core-2" class="cpu-core bg-blue-600/40 border border-blue-400 rounded h-14 flex flex-col items-center justify-center text-xs text-blue-200 transition-all">
+                                    <span class="font-bold">Core 3</span>
+                                    <span class="text-[10px] text-slate-400">ALU+FPU</span>
+                                </div>
+                                <div id="cpu-core-3" class="cpu-core bg-blue-600/40 border border-blue-400 rounded h-14 flex flex-col items-center justify-center text-xs text-blue-200 transition-all">
+                                    <span class="font-bold">Core 4</span>
+                                    <span class="text-[10px] text-slate-400">ALU+FPU</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-300 space-y-1">
+                            <div><i class="fa-solid fa-check text-blue-400 mr-1"></i> SANGAT Cepat untuk 1 tugas rumit sekuensial (OS, Logic, DB).</div>
+                            <div><i class="fa-solid fa-xmark text-red-400 mr-1"></i> Sangat lambat untuk mengolah triliunan parameter AI bersamaan.</div>
+                        </div>
+                    </div>
+
+                    <!-- GPU Box -->
+                    <div class="bg-slate-900/80 rounded-xl p-5 border border-emerald-500/40 relative overflow-hidden">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-bold text-emerald-400 flex items-center">
+                                <i class="fa-solid fa-grip mr-2"></i> Graphics Processing Unit (GPU)
+                            </h3>
+                            <span class="text-xs bg-emerald-900/60 text-emerald-300 px-2 py-1 rounded border border-emerald-700">Throughput-Optimized</span>
+                        </div>
+                        <p class="text-xs text-slate-400 mb-4">Ribuan Core sederhana (CUDA / Streaming Multiprocessors), Cache terdistribusi, dioptimalkan untuk perkalian matriks paralel.</p>
+
+                        <!-- GPU Physical Layout Visual -->
+                        <div class="bg-slate-950 p-4 rounded-lg border border-slate-800 space-y-2">
+                            <div class="flex space-x-2">
+                                <div class="w-1/3 bg-amber-600/20 border border-amber-500/40 p-1 rounded text-center text-[10px] text-amber-300">Control</div>
+                                <div class="w-2/3 bg-indigo-900/30 border border-indigo-700/40 p-1 rounded text-center text-[10px] text-indigo-300">Shared Memory L2</div>
+                            </div>
+                            <!-- GPU Core Grid (128 Cores Represented) -->
+                            <div class="grid grid-cols-16 gap-1 pt-1 max-h-28 overflow-hidden" id="gpu-core-grid">
+                                <!-- Generated dynamically via JS -->
+                            </div>
+                        </div>
+
+                        <div class="mt-4 pt-3 border-t border-slate-800 text-xs text-slate-300 space-y-1">
+                            <div><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Mengeksekusi ribuan operasi angka matematika desimal secara serentak.</div>
+                            <div><i class="fa-solid fa-check text-emerald-400 mr-1"></i> Arsitektur ideal untuk pelatihan Deep Learning & Transformer LLM.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Workload Simulation Control -->
+                <div class="mt-6 bg-slate-800/80 p-4 rounded-lg flex flex-col sm:flex-row justify-between items-center gap-4 border border-slate-700">
+                    <div>
+                        <h4 class="font-bold text-sm text-white">Simulasi Pemrosesan Data (1.000 Perhitungan AI Layer)</h4>
+                        <p class="text-xs text-slate-400">Bandingkan eksekusi sekuensial (CPU) vs eksekusi paralel instan (GPU CUDA).</p>
+                    </div>
+                    <div class="flex space-x-2">
+                        <button onclick="runCpuWorkload()" class="px-4 py-2 bg-blue-600 hover:bg-blue-500 text-white rounded-lg text-xs font-semibold flex items-center transition">
+                            <i class="fa-solid fa-play mr-2"></i> Jalankan di CPU
+                        </button>
+                        <button onclick="runGpuWorkload()" class="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white rounded-lg text-xs font-semibold flex items-center transition">
+                            <i class="fa-solid fa-bolt mr-2"></i> Jalankan di GPU (CUDA)
+                        </button>
+                    </div>
+                </div>
+
+                <!-- Execution Progress bar -->
+                <div class="mt-4 space-y-2">
+                    <div class="flex justify-between text-xs text-slate-400">
+                        <span id="sim-status">Status: Siap untuk simulasi...</span>
+                        <span id="sim-timer">Waktu Pemrosesan: 0 ms</span>
+                    </div>
+                    <div class="w-full bg-slate-950 h-3 rounded-full overflow-hidden border border-slate-800">
+                        <div id="sim-progress" class="bg-gradient-to-r from-blue-500 to-emerald-400 h-full w-0 transition-all duration-100"></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 2: ANATOMY OF CUDA CORE & TENSOR CORE -->
+        <section id="sec-cuda" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-xl p-6 border border-slate-700 shadow-xl">
+                <h2 class="text-2xl font-bold text-nvidia mb-2 flex items-center">
+                    <i class="fa-solid fa-microchip mr-3"></i> Arsitektur GPU Modern: CUDA Core vs Tensor Core
+                </h2>
+                <p class="text-slate-300 text-sm mb-6">
+                    Pada GPU AI modern (seperti NVIDIA H100, A100, atau RTX 4090), terdapat dua jenis core utama: **CUDA Cores** (skalar/vektor umum) dan **Tensor Cores** (akselerator matriks khusus AI).
+                </p>
+
+                <!-- Comparison Cards: CUDA vs Tensor Core -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
+                    <div class="bg-slate-900 p-5 rounded-xl border border-emerald-500/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-emerald-400 text-base"><i class="fa-solid fa-calculator mr-2"></i> Standard CUDA Cores</span>
+                            <span class="text-xs bg-emerald-950 text-emerald-300 border border-emerald-700 px-2 py-0.5 rounded">SIMT Architecture</span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Menjalankan **1 Operasi per Siklus Clock** per thread (misal: $A \times B + C$ pada skala skalar/vektor FP32).
+                        </p>
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800 text-xs font-mono text-emerald-300">
+                            Formula: Output = (a * b) + c <span class="text-slate-500">(Multiply-Add skalar)</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            <strong>Kegunaan:</strong> Rendering grafis, estimasi awal, simulasi fisika, dan perhitungan matematika fleksibel umum.
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-5 rounded-xl border border-tensor/60 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-tensor text-base"><i class="fa-solid fa-cubes-stacked mr-2"></i> Tensor Cores (AI Accelerator)</span>
+                            <span class="text-xs bg-pink-950 text-pink-300 border border-tensor px-2 py-0.5 rounded">MMA Hardware</span>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Menjalankan **Perkalian Matriks $4 \times 4$ sekaligus dalam 1 Siklus Clock** (Matrix Multiply-Accumulate / MMA).
+                        </p>
+                        <div class="bg-slate-950 p-3 rounded border border-slate-800 text-xs font-mono text-tensor">
+                            Formula: $D = A \times B + C$ <span class="text-slate-500">(Perkalian Matriks FP16/BF16/FP8)</span>
+                        </div>
+                        <div class="text-[11px] text-slate-400">
+                            <strong>Kegunaan Khusus:</strong> Akselerasi drastis untuk **pelatihan & inferensi Transformer LLM** (hingga 16x lebih cepat dibanding CUDA core biasa).
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Precision Comparison (FP32 vs FP16 vs BF16 vs FP8) -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <h3 class="text-sm font-bold text-slate-200 flex items-center">
+                        <i class="fa-solid fa-gauge-high text-amber-400 mr-2"></i> Format Presisi Angka pada Pelatihan LLM (Precision Formats)
+                    </h3>
+                    <p class="text-xs text-slate-400 leading-relaxed">
+                        LLM dengan puluhan miliar parameter akan mengonsumsi VRAM memori yang sangat besar. Oleh karena itu, industri AI berpindah dari FP32 ke presisi campuran (**Mixed Precision FP16/BF16/FP8**).
+                    </p>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-3 text-xs">
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+                            <div class="font-bold text-blue-400">FP32 (Single Precision)</div>
+                            <div class="text-slate-400">Ukuran: 32 bit (4 Byte)</div>
+                            <div class="text-[10px] text-slate-500">Sangat akurat, namun boros VRAM & bandwidth GPU. Digunakan untuk Master Weights Optimizer.</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+                            <div class="font-bold text-emerald-400">FP16 (Half Precision)</div>
+                            <div class="text-slate-400">Ukuran: 16 bit (2 Byte)</div>
+                            <div class="text-[10px] text-slate-500">Hemat VRAM 50%. Membutuhkan Loss Scaling agar nilai gradient sangat kecil tidak overflow/underflow.</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1 border-nvidia/50">
+                            <div class="font-bold text-nvidia">BF16 (Bfloat16) ★ Standard LLM</div>
+                            <div class="text-slate-400">Ukuran: 16 bit (2 Byte)</div>
+                            <div class="text-[10px] text-slate-500">Range dinamis sama persis dengan FP32. Format standar paling stabil untuk training LLaMA, GPT-4, & DeepSeek.</div>
+                        </div>
+                        <div class="bg-slate-950 p-3 rounded-lg border border-slate-800 space-y-1">
+                            <div class="font-bold text-pink-400">FP8 / INT8 (Quantized)</div>
+                            <div class="text-slate-400">Ukuran: 8 bit (1 Byte)</div>
+                            <div class="text-[10px] text-slate-500">Paling hemat VRAM. Didukung Tensor Core GPU H100/Blackwell untuk inferensi cepat & ultra-large fine-tuning.</div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- CUDA Hierarchy Selector -->
+                <div class="mt-6 grid grid-cols-1 lg:grid-cols-3 gap-6">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <h3 class="text-xs font-bold text-emerald-400 uppercase tracking-wider">Hirarki Eksekusi Hardware GPU</h3>
+                        
+                        <div onclick="selectHierarchy('grid')" class="cursor-pointer p-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:border-emerald-500 transition" id="card-grid">
+                            <div class="font-bold text-sm text-slate-200">1. GPU Grid (Global LLM Task)</div>
+                            <p class="text-xs text-slate-400">Tugas raksasa seperti perhitungan perkalian matriks Layer Attention LLM.</p>
+                        </div>
+
+                        <div onclick="selectHierarchy('block')" class="cursor-pointer p-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:border-emerald-500 transition" id="card-block">
+                            <div class="font-bold text-sm text-slate-200">2. Streaming Multiprocessor (SM)</div>
+                            <p class="text-xs text-slate-400">Unit fisik GPU berisi puluhan CUDA Cores, Tensor Cores, & SRAM Shared Memory.</p>
+                        </div>
+
+                        <div onclick="selectHierarchy('warp')" class="cursor-pointer p-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:border-emerald-500 transition" id="card-warp">
+                            <div class="font-bold text-sm text-slate-200">3. Warp Unit (32 Threads SIMT)</div>
+                            <p class="text-xs text-slate-400">Kelompok 32 thread paralel yang mengeksekusi instruksi synchronously.</p>
+                        </div>
+
+                        <div onclick="selectHierarchy('core')" class="cursor-pointer p-3 rounded-lg border border-slate-700 bg-slate-800/80 hover:border-emerald-500 transition" id="card-core">
+                            <div class="font-bold text-sm text-tensor">4. Tensor Core Matrix Engine</div>
+                            <p class="text-xs text-slate-400">Sirkuit keras pemroses perkalian matriks khusus FP16/BF16/FP8.</p>
+                        </div>
+                    </div>
+
+                    <div class="lg:col-span-2 bg-slate-950 p-6 rounded-xl border border-slate-800 flex flex-col justify-between">
+                        <div id="cuda-detail-content">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 3: MATRIX & SELF-ATTENTION SIMULATION -->
+        <section id="sec-attention" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-xl p-6 border border-slate-700 shadow-xl">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4">
+                    <div>
+                        <h2 class="text-2xl font-bold text-nvidia flex items-center">
+                            <i class="fa-solid fa-diagram-project mr-3"></i> Jantung LLM: Perkalian Matriks Self-Attention
+                        </h2>
+                        <p class="text-slate-300 text-sm">
+                            Arsitektur Transformer LLM berakar pada mekanisme **Self-Attention**: $\text{Attention}(Q, K, V) = \text{softmax}\left(\frac{Q K^T}{\sqrt{d_k}}\right) V$.
+                        </p>
+                    </div>
+                    <span class="mt-2 md:mt-0 text-xs bg-amber-900/60 text-amber-300 border border-amber-700 px-3 py-1 rounded-full">
+                        $O(N^2)$ Matrix Multiplication Workload
+                    </span>
+                </div>
+
+                <!-- Matrix Math Interactive Board -->
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6 items-center bg-slate-950 p-6 rounded-xl border border-slate-800">
+                    
+                    <!-- Matrix Query (Q) -->
+                    <div class="lg:col-span-3 text-center">
+                        <div class="text-xs font-bold text-blue-400 mb-2">Matriks Query ($Q$) [Token Embeddings]</div>
+                        <div class="grid grid-cols-4 gap-1 bg-slate-900 p-2 rounded-lg border border-blue-900" id="matrix-a">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Operator Multiply -->
+                    <div class="lg:col-span-1 text-center font-bold text-2xl text-slate-500">
+                        $\times$
+                    </div>
+
+                    <!-- Matrix Key (K_T) -->
+                    <div class="lg:col-span-3 text-center">
+                        <div class="text-xs font-bold text-amber-400 mb-2">Matriks Key Transpose ($K^T$) [Context Weights]</div>
+                        <div class="grid grid-cols-4 gap-1 bg-slate-900 p-2 rounded-lg border border-amber-900" id="matrix-b">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+
+                    <!-- Operator Equals -->
+                    <div class="lg:col-span-1 text-center font-bold text-2xl text-slate-500">
+                        $=$
+                    </div>
+
+                    <!-- Matrix Output Attention Scores -->
+                    <div class="lg:col-span-4 text-center">
+                        <div class="text-xs font-bold text-tensor mb-2">Attention Score Map (Tensor Core Output)</div>
+                        <div class="grid grid-cols-4 gap-1 bg-slate-900 p-2 rounded-lg border border-pink-900" id="matrix-c">
+                            <!-- Populated via JS -->
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Controller and Comparison Stats -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-4">
+                        <h3 class="text-sm font-bold text-slate-200">Mode Eksekusi Perhitungan Matriks Attention:</h3>
+                        <div class="flex space-x-3">
+                            <button onclick="simulateMatrixCPU()" id="btn-mat-cpu" class="flex-1 py-3 bg-blue-600 hover:bg-blue-500 text-white font-semibold rounded-lg text-xs transition">
+                                <i class="fa-solid fa-clock mr-1"></i> CPU Mode (1 Core Sekuensial)
+                            </button>
+                            <button onclick="simulateMatrixGPU()" id="btn-mat-gpu" class="flex-1 py-3 bg-tensor hover:bg-pink-600 text-white font-semibold rounded-lg text-xs transition">
+                                <i class="fa-solid fa-bolt mr-1"></i> GPU Tensor Cores (Parallel FP16)
+                            </button>
+                        </div>
+                        <div class="text-xs text-slate-400 leading-relaxed bg-slate-950 p-3 rounded border border-slate-800" id="matrix-explanation">
+                            Klik tombol di atas untuk melihat bagaimana GPU Tensor Cores menyelesaikan perhitungan perkalian matriks Self-Attention secara serentak dalam hitungan nanodetik!
+                        </div>
+                    </div>
+
+                    <div class="bg-slate-900 p-4 rounded-xl border border-slate-800 space-y-3">
+                        <h3 class="text-sm font-bold text-slate-200">Statistik Komputasi Matriks Attention</h3>
+                        <div class="grid grid-cols-2 gap-3 text-center">
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-[10px] text-slate-400">Siklus Clock Perhitungan</div>
+                                <div id="stat-cycles" class="text-2xl font-extrabold text-amber-400">0</div>
+                            </div>
+                            <div class="bg-slate-950 p-3 rounded border border-slate-800">
+                                <div class="text-[10px] text-slate-400">Tensor/CUDA Cores Aktif</div>
+                                <div id="stat-cores" class="text-2xl font-extrabold text-tensor">0</div>
+                            </div>
+                        </div>
+                        <div class="text-[11px] text-slate-400 italic">
+                            *Pada model LLM asli seperti LLaMA-70B, ukuran matriks ini mencapai ribuan dimensi ($8192 \times 8192$), di mana GPU menghemat waktu pelatihan dari ribuan tahun (CPU) menjadi hitungan minggu!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 4: LLM TRAINING PIPELINE ON GPUS -->
+        <section id="sec-llm-train" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-xl p-6 border border-slate-700 shadow-xl">
+                <h2 class="text-2xl font-bold text-nvidia mb-2 flex items-center">
+                    <i class="fa-solid fa-arrows-spin mr-3"></i> Siklus Pelatihan LLM di GPU: Forward & Backward Pass
+                </h2>
+                <p class="text-slate-300 text-sm mb-6">
+                    Pelatihan model AI generatif (Large Language Model) bukan sekadar membaca data, melainkan siklus matematika berulang yang melibatkan 4 tahap utama di VRAM GPU.
+                </p>
+
+                <!-- Interactive Training Flow Diagram -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                    <!-- Step 1 -->
+                    <div id="step-card-1" class="bg-slate-900 p-4 rounded-xl border border-blue-500/40 space-y-2 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-blue-400">TAHAP 1</span>
+                            <i class="fa-solid fa-arrow-right-to-bracket text-blue-400"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">1. Forward Pass</h3>
+                        <p class="text-xs text-slate-400">
+                            Token teks diubah menjadi Embedding, lalu dilewatkan melalui puluhan Layer Transformer ($W \cdot X$) di Tensor Cores untuk memprediksi token berikutnya.
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            VRAM Usage: Activations Saved
+                        </div>
+                    </div>
+
+                    <!-- Step 2 -->
+                    <div id="step-card-2" class="bg-slate-900 p-4 rounded-xl border border-amber-500/40 space-y-2 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-amber-400">TAHAP 2</span>
+                            <i class="fa-solid fa-bullseye text-amber-400"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">2. Loss Calculation</h3>
+                        <p class="text-xs text-slate-400">
+                            Membandingkan prediksi LLM dengan teks asli menggunakan Cross-Entropy Loss untuk mengukur seberapa besar margin kesalahan.
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            Formula: Loss = -log(P_target)
+                        </div>
+                    </div>
+
+                    <!-- Step 3 -->
+                    <div id="step-card-3" class="bg-slate-900 p-4 rounded-xl border border-pink-500/40 space-y-2 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-pink-400">TAHAP 3</span>
+                            <i class="fa-solid fa-rotate-left text-pink-400"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">3. Backward Pass (Gradients)</h3>
+                        <p class="text-xs text-slate-400">
+                            Menghitung turunan parsial (Gradient $\frac{\partial L}{\partial W}$) dari akhir layer ke awal layer menggunakan aturan rantai (Autograd Backpropagation).
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            VRAM Usage: Gradients Tensor
+                        </div>
+                    </div>
+
+                    <!-- Step 4 -->
+                    <div id="step-card-4" class="bg-slate-900 p-4 rounded-xl border border-emerald-500/40 space-y-2 transition-all">
+                        <div class="flex items-center justify-between">
+                            <span class="text-xs font-bold text-emerald-400">TAHAP 4</span>
+                            <i class="fa-solid fa-sliders text-emerald-400"></i>
+                        </div>
+                        <h3 class="font-bold text-sm text-white">4. Optimizer Weight Update</h3>
+                        <p class="text-xs text-slate-400">
+                            Optimizer (seperti AdamW) memperbarui bobot parameter ($W = W - \eta \cdot m_t / \sqrt{v_t}$) agar model semakin pintar.
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            VRAM Usage: Adam Momentum States
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Simulation Interactive Trigger -->
+                <div class="bg-slate-900 p-5 rounded-xl border border-slate-800 space-y-4">
+                    <div class="flex flex-col sm:flex-row justify-between items-center gap-4">
+                        <div>
+                            <h3 class="font-bold text-sm text-white">Simulasi Interaktif 1 Iterasi Training Step</h3>
+                            <p class="text-xs text-slate-400">Amati bagaimana data mengalir di memori GPU selama proses pelatihan LLM berlangsung.</p>
+                        </div>
+                        <button onclick="runLLMTrainingStep()" id="btn-train-sim" class="px-5 py-2.5 bg-nvidia hover:bg-emerald-500 text-black font-bold text-xs rounded-lg shadow-md transition flex items-center">
+                            <i class="fa-solid fa-play mr-2"></i> Jalankan Training Step LLM
+                        </button>
+                    </div>
+
+                    <!-- Memory Allocation Breakdown Chart -->
+                    <div class="space-y-2 pt-2">
+                        <div class="text-xs font-semibold text-slate-300">Komposisi Penggunaan VRAM GPU saat Pelatihan (Dalam FP16/BF16 + AdamW):</div>
+                        <div class="h-6 w-full bg-slate-950 rounded-lg overflow-hidden flex text-[10px] font-bold text-slate-900">
+                            <div class="bg-blue-500 h-full flex items-center justify-center p-1" style="width: 20%;" title="Model Weights (2 Bytes/param)">Model (20%)</div>
+                            <div class="bg-pink-500 h-full flex items-center justify-center p-1" style="width: 20%;" title="Gradients (2 Bytes/param)">Gradients (20%)</div>
+                            <div class="bg-amber-500 h-full flex items-center justify-center p-1" style="width: 45%;" title="Adam Optimizer States (8-12 Bytes/param)">Adam States (45%)</div>
+                            <div class="bg-emerald-400 h-full flex items-center justify-center p-1" style="width: 15%;" title="Activation Memory">Activations (15%)</div>
+                        </div>
+                        <div class="flex justify-between text-[11px] text-slate-400 pt-1">
+                            <span><i class="fa-solid fa-square text-blue-500 mr-1"></i> Weight Parameters (2B)</span>
+                            <span><i class="fa-solid fa-square text-pink-500 mr-1"></i> Gradients (2B)</span>
+                            <span><i class="fa-solid fa-square text-amber-500 mr-1"></i> Adam Optimizer States (8B-12B)</span>
+                            <span><i class="fa-solid fa-square text-emerald-400 mr-1"></i> Activations Memory</span>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- SECTION 5: MULTI-GPU CLUSTER & PARALLELISM SIMULATOR -->
+        <section id="sec-parallel" class="tab-content hidden space-y-6">
+            <div class="bg-cardbg rounded-xl p-6 border border-slate-700 shadow-xl">
+                <h2 class="text-2xl font-bold text-nvidia mb-2 flex items-center">
+                    <i class="fa-solid fa-network-wired mr-3"></i> Mengapa 1 GPU Tidak Cukup? Multi-GPU Parallelism
+                </h2>
+                <p class="text-slate-300 text-sm mb-6">
+                    Model LLM raksasa (seperti LLaMA-70B yang membutuhkan >140GB VRAM hanya untuk bobotnya) tidak muat dalam 1 GPU. Oleh karena itu, digunakan kombinasi 3 teknik **Parallelism** via interconnect super cepat seperti **NVLink & NVSwitch**.
+                </p>
+
+                <!-- 3 Parallelism Strategies Cards -->
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-6">
+                    <!-- Data Parallelism -->
+                    <div class="bg-slate-900 p-5 rounded-xl border border-blue-500/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-blue-400 text-sm">1. Data Parallelism (DP/DDP)</span>
+                            <i class="fa-solid fa-boxes-stacked text-blue-400"></i>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Model LLM utuh diduplikasi ke semua GPU. Dataset batch besar dibagi rata. Setiap GPU menghitung gradient secara lokal, lalu menyinkronkan gradient via **All-Reduce**.
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            Cocok untuk: Model sedang yang muat di 1 VRAM GPU.
+                        </div>
+                    </div>
+
+                    <!-- Tensor Parallelism -->
+                    <div class="bg-slate-900 p-5 rounded-xl border border-tensor/60 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-tensor text-sm">2. Tensor Parallelism (TP)</span>
+                            <i class="fa-solid fa-[#EC4899] fa-scissors text-tensor"></i>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            Matriks perkalian pada **tiap layer Transformer dipotong/dibagi** (column-wise / row-wise) ke beberapa GPU.
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            Cocok untuk: Mengatasi batas VRAM 1 GPU secara instan via NVLink.
+                        </div>
+                    </div>
+
+                    <!-- Pipeline Parallelism -->
+                    <div class="bg-slate-900 p-5 rounded-xl border border-amber-500/50 space-y-3">
+                        <div class="flex items-center justify-between">
+                            <span class="font-bold text-amber-400 text-sm">3. Pipeline Parallelism (PP)</span>
+                            <i class="fa-solid fa-bars-staggered text-amber-400"></i>
+                        </div>
+                        <p class="text-xs text-slate-300">
+                            **Layer LLM dibagi secara sekuensial** antar GPU (misal: GPU 1 menangani Layer 1–20, GPU 2 menangani Layer 21–40, dst).
+                        </p>
+                        <div class="bg-slate-950 p-2 rounded text-[10px] text-slate-400 font-mono">
+                            Cocok untuk: Skala cluster superkomputer raksasa.
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Interactive Cluster Memory Estimator -->
+                <div class="bg-slate-950 p-6 rounded-xl border border-slate-800 space-y-5">
+                    <h3 class="text-sm font-bold text-white flex items-center">
+                        <i class="fa-solid fa-calculator text-nvidia mr-2"></i> Kalkulator & Estimator Memory Cluster Pelatihan LLM
+                    </h3>
+
+                    <div class="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Pilih Ukuran Model LLM:</label>
+                            <select id="calc-model" onchange="calculateCluster()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                                <option value="7">LLaMA 3 - 8B Parameter</option>
+                                <option value="70" selected>LLaMA 3 - 70B Parameter</option>
+                                <option value="405">LLaMA 3 - 405B Parameter</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Presisi Data (Precision):</label>
+                            <select id="calc-precision" onchange="calculateCluster()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                                <option value="2">BF16 / FP16 (2 Bytes/param) - Default Training</option>
+                                <option value="1">FP8 (1 Byte/param) - Quantized</option>
+                            </select>
+                        </div>
+
+                        <div>
+                            <label class="block text-xs text-slate-400 mb-1">Tipe GPU Cluster:</label>
+                            <select id="calc-gpu" onchange="calculateCluster()" class="w-full bg-slate-900 border border-slate-700 rounded-lg p-2 text-xs text-white">
+                                <option value="80">NVIDIA A100 (80GB VRAM)</option>
+                                <option value="80-h100" selected>NVIDIA H100 (80GB VRAM, Tensor Core v5)</option>
+                                <option value="192">NVIDIA B200 Blackwell (192GB VRAM)</option>
+                            </select>
+                        </div>
+                    </div>
+
+                    <!-- Calculated Results -->
+                    <div class="bg-slate-900 p-4 rounded-lg border border-slate-800 grid grid-cols-1 sm:grid-cols-3 gap-4 text-center">
+                        <div>
+                            <div class="text-[10px] text-slate-400">Total VRAM Dibutuhkan (Training Full AdamW)</div>
+                            <div id="res-vram" class="text-xl font-extrabold text-tensor">0 GB</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">Min. Jumlah GPU Dibutuhkan</div>
+                            <div id="res-gpus" class="text-xl font-extrabold text-nvidia">0 GPU</div>
+                        </div>
+                        <div>
+                            <div class="text-[10px] text-slate-400">Rekomendasi Parallelism Setup</div>
+                            <div id="res-parallel" class="text-xs font-bold text-amber-400 mt-1">TP=8, PP=2</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-cardbg border-t border-slate-800 py-4 text-center text-xs text-slate-400">
+        <p>Informatics Engineering - Universitas Surabaya (UBAYA) | Computer Organization & Architecture: GPU Acceleration & LLM Training</p>
+    </footer>
+
+    <!-- JavaScript Logic -->
+    <script>
+        // Init GPU Cores Visual Grid (128 cores)
+        const gpuGrid = document.getElementById('gpu-core-grid');
+        if (gpuGrid) {
+            for (let i = 0; i < 128; i++) {
+                const core = document.createElement('div');
+                core.id = `gpu-core-${i}`;
+                core.className = 'gpu-core-box h-3 bg-emerald-900/30 border border-emerald-700/40 rounded-sm transition-all duration-75';
+                gpuGrid.appendChild(core);
+            }
+        }
+
+        // Switch Tabs Logic
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.querySelectorAll('.tab-btn').forEach(el => {
+                el.classList.remove('bg-slate-700', 'text-white');
+                el.classList.add('hover:bg-slate-700', 'text-slate-300');
+            });
+
+            document.getElementById(`sec-${tabId}`).classList.remove('hidden');
+            const activeBtn = document.getElementById(`tab-${tabId}`);
+            if (activeBtn) {
+                activeBtn.classList.add('bg-slate-700', 'text-white');
+                activeBtn.classList.remove('hover:bg-slate-700', 'text-slate-300');
+            }
+        }
+
+        // --- SECTION 1: CPU vs GPU WORKLOAD SIMULATOR ---
+        function runCpuWorkload() {
+            const status = document.getElementById('sim-status');
+            const timer = document.getElementById('sim-timer');
+            const progress = document.getElementById('sim-progress');
+            
+            progress.style.width = '0%';
+            status.innerText = 'Status: CPU sedang mengeksekusi instruksi secara sekuensial (Core demi Core)...';
+            
+            let currentCore = 0;
+            let cycle = 0;
+            const interval = setInterval(() => {
+                document.querySelectorAll('.cpu-core').forEach(c => c.classList.remove('core-cpu-active'));
+                
+                const cEl = document.getElementById(`cpu-core-${currentCore}`);
+                if (cEl) cEl.classList.add('core-cpu-active');
+                
+                cycle += 25;
+                progress.style.width = `${cycle / 10}%`;
+                timer.innerText = `Waktu Pemrosesan: ${cycle * 8} ms`;
+
+                currentCore = (currentCore + 1) % 4;
+
+                if (cycle >= 1000) {
+                    clearInterval(interval);
+                    document.querySelectorAll('.cpu-core').forEach(c => c.classList.remove('core-cpu-active'));
+                    status.innerText = 'Status: Selesai! CPU membutuhkan waktu 8.000 ms (Sekuensial).';
+                }
+            }, 50);
+        }
+
+        function runGpuWorkload() {
+            const status = document.getElementById('sim-status');
+            const timer = document.getElementById('sim-timer');
+            const progress = document.getElementById('sim-progress');
+            
+            progress.style.width = '0%';
+            status.innerText = 'Status: GPU memicu 128+ CUDA Cores mengeksekusi data paralel bersamaan!';
+            
+            const cores = document.querySelectorAll('.gpu-core-box');
+            cores.forEach(c => c.classList.add('core-active'));
+
+            let progressWidth = 0;
+            const interval = setInterval(() => {
+                progressWidth += 25;
+                progress.style.width = `${progressWidth}%`;
+                timer.innerText = `Waktu Pemrosesan: ${progressWidth * 0.4} ms`;
+
+                if (progressWidth >= 100) {
+                    clearInterval(interval);
+                    setTimeout(() => {
+                        cores.forEach(c => c.classList.remove('core-active'));
+                    }, 300);
+                    status.innerText = 'Status: Selesai! GPU menyelesaikan seluruh instruksi hanya dalam 40 ms! (200x lebih cepat)';
+                }
+            }, 50);
+        }
+
+        // --- SECTION 2: CUDA & TENSOR HIERARCHY SELECTOR ---
+        const cudaData = {
+            grid: {
+                title: "GPU Grid Level",
+                desc: "Grid adalah tingkat software teratas CUDA. Saat Anda melatih model LLM seperti LLaMA, seluruh operasi matriks perkalian raksasa dipecah menjadi ribuan Grid independen.",
+                tech: "Berisi ribuan Thread Block yang dikirim ke Streaming Multiprocessors.",
+                icon: "fa-cubes text-blue-400"
+            },
+            block: {
+                title: "Streaming Multiprocessor (SM)",
+                desc: "Satu SM berisi puluhan CUDA Cores, Tensor Cores, & SRAM Shared Memory L1 berkecepatan tinggi (~192 KB per SM) untuk pertukaran data antar-thread.",
+                tech: "Tempat penjadwalan Warp Scheduler & register file.",
+                icon: "fa-microchip text-indigo-400"
+            },
+            warp: {
+                title: "Warp Execution Unit (32 Threads)",
+                desc: "Kelompok 32 thread paralel yang mengeksekusi instruksi synchronously (SIMT). Menghindari overhead percabangan instruksi (branch divergence).",
+                tech: "32 Threads x 1 Clock Cycle.",
+                icon: "fa-bolt text-amber-400"
+            },
+            core: {
+                title: "Tensor Core Matrix Engine (FP16 / BF16 / FP8)",
+                desc: "Unit akselerasi keras yang mampu mengeksekusi operasi perkalian dan penjumlahan matriks $4 \times 4$ dalam 1 siklus clock tunggal ($D = A \cdot B + C$).",
+                tech: "Akselerasi utama untuk pelatihan Transformer LLM & Deep Learning modern.",
+                icon: "fa-atom text-tensor"
+            }
+        };
+
+        function selectHierarchy(type) {
+            document.querySelectorAll('[id^="card-"]').forEach(el => el.classList.remove('border-emerald-500', 'border-tensor', 'bg-slate-700'));
+            const card = document.getElementById(`card-${type}`);
+            if (card) card.classList.add('border-tensor', 'bg-slate-700');
+
+            const item = cudaData[type];
+            const detailContainer = document.getElementById('cuda-detail-content');
+            if (detailContainer && item) {
+                detailContainer.innerHTML = `
+                    <div class="space-y-4">
+                        <div class="flex items-center space-x-3">
+                            <i class="fa-solid ${item.icon} text-3xl"></i>
+                            <div>
+                                <h3 class="text-xl font-bold text-white">${item.title}</h3>
+                                <span class="text-xs text-slate-400 font-mono">Spesifikasi Komponen GPU</span>
+                            </div>
+                        </div>
+                        <p class="text-sm text-slate-300 leading-relaxed">${item.desc}</p>
+                        <div class="bg-slate-900 p-4 rounded-lg border border-slate-800">
+                            <span class="text-xs font-bold text-tensor uppercase tracking-wider block mb-1">Peran dalam Pelatihan LLM:</span>
+                            <p class="text-xs text-slate-300">${item.tech}</p>
+                        </div>
+                    </div>
+                `;
+            }
+        }
+
+        selectHierarchy('core');
+
+        // --- SECTION 3: MATRIX & ATTENTION SIMULATOR ---
+        const matSize = 4;
+        let matA = [
+            [1, 2, 0, 1],
+            [2, 1, 3, 0],
+            [0, 1, 2, 1],
+            [1, 0, 1, 2]
+        ];
+        let matB = [
+            [2, 1, 0, 1],
+            [0, 2, 1, 0],
+            [1, 0, 2, 1],
+            [2, 1, 0, 1]
+        ];
+
+        function renderMatrices() {
+            const containerA = document.getElementById('matrix-a');
+            const containerB = document.getElementById('matrix-b');
+            const containerC = document.getElementById('matrix-c');
+
+            if (!containerA || !containerB || !containerC) return;
+
+            containerA.innerHTML = '';
+            containerB.innerHTML = '';
+            containerC.innerHTML = '';
+
+            for (let r = 0; r < matSize; r++) {
+                for (let c = 0; c < matSize; c++) {
+                    containerA.innerHTML += `<div class="bg-slate-800 text-blue-300 text-xs font-mono p-2 rounded">${matA[r][c]}</div>`;
+                    containerB.innerHTML += `<div class="bg-slate-800 text-amber-300 text-xs font-mono p-2 rounded">${matB[r][c]}</div>`;
+                    containerC.innerHTML += `<div id="cell-c-${r}-${c}" class="bg-slate-800 text-pink-400 text-xs font-mono p-2 rounded transition-all">0</div>`;
+                }
+            }
+        }
+
+        function simulateMatrixCPU() {
+            renderMatrices();
+            const exp = document.getElementById('matrix-explanation');
+            const statCycles = document.getElementById('stat-cycles');
+            const statCores = document.getElementById('stat-cores');
+
+            exp.innerHTML = `<span class="text-blue-400 font-bold">CPU Mode:</span> Menghitung sel perkalian matriks satu per satu secara sekuensial (Loop 3 tingkat: $i, j, k$). Menggunakan 1 CPU core biasa.`;
+            statCores.innerText = '1 CPU Core';
+
+            let steps = 0;
+            let cycleCount = 0;
+
+            for (let r = 0; r < matSize; r++) {
+                for (let c = 0; c < matSize; c++) {
+                    setTimeout(() => {
+                        let sum = 0;
+                        for (let k = 0; k < matSize; k++) {
+                            sum += matA[r][k] * matB[k][c];
+                        }
+                        const cell = document.getElementById(`cell-c-${r}-${c}`);
+                        if (cell) {
+                            cell.innerText = sum;
+                            cell.classList.add('bg-blue-600', 'text-white', 'scale-110');
+                            setTimeout(() => cell.classList.remove('scale-110'), 150);
+                        }
+                    }, steps * 120);
+
+                    steps++;
+                }
+            }
+
+            const interval = setInterval(() => {
+                cycleCount += 4;
+                if (cycleCount >= 64) {
+                    cycleCount = 64;
+                    clearInterval(interval);
+                }
+                statCycles.innerText = cycleCount;
+            }, 100);
+        }
+
+        function simulateMatrixGPU() {
+            renderMatrices();
+            const exp = document.getElementById('matrix-explanation');
+            const statCycles = document.getElementById('stat-cycles');
+            const statCores = document.getElementById('stat-cores');
+
+            exp.innerHTML = `<span class="text-tensor font-bold">GPU Tensor Core Mode:</span> Menggunakan perkalian Matriks Hardware (MMA). Seluruh 16 hasil sel dihitung **SERENTAK** dalam 1 siklus clock!`;
+            statCores.innerText = '16 Tensor Cores (Parallel)';
+
+            setTimeout(() => {
+                for (let r = 0; r < matSize; r++) {
+                    for (let c = 0; c < matSize; c++) {
+                        let sum = 0;
+                        for (let k = 0; k < matSize; k++) {
+                            sum += matA[r][k] * matB[k][c];
+                        }
+                        const cell = document.getElementById(`cell-c-${r}-${c}`);
+                        if (cell) {
+                            cell.innerText = sum;
+                            cell.classList.add('bg-pink-600', 'text-white', 'font-bold', 'scale-110');
+                        }
+                    }
+                }
+                statCycles.innerText = '1 Tensor Clock Cycle';
+            }, 200);
+        }
+
+        renderMatrices();
+
+        // --- SECTION 4: LLM TRAINING STEP SIMULATION ---
+        function runLLMTrainingStep() {
+            const btn = document.getElementById('btn-train-sim');
+            btn.disabled = true;
+            btn.classList.add('opacity-50');
+
+            const steps = [1, 2, 3, 4];
+            let current = 0;
+
+            const interval = setInterval(() => {
+                steps.forEach(s => {
+                    const el = document.getElementById(`step-card-${s}`);
+                    if (el) el.classList.remove('ring-2', 'ring-nvidia', 'scale-105', 'bg-slate-800');
+                });
+
+                if (current < steps.length) {
+                    const activeEl = document.getElementById(`step-card-${steps[current]}`);
+                    if (activeEl) activeEl.classList.add('ring-2', 'ring-nvidia', 'scale-105', 'bg-slate-800');
+                    current++;
+                } else {
+                    clearInterval(interval);
+                    btn.disabled = false;
+                    btn.classList.remove('opacity-50');
+                }
+            }, 800);
+        }
+
+        // --- SECTION 5: CLUSTER MEMORY CALCULATOR ---
+        function calculateCluster() {
+            const params = parseFloat(document.getElementById('calc-model').value);
+            const bytesPerParam = parseFloat(document.getElementById('calc-precision').value);
+            const gpuType = document.getElementById('calc-gpu').value;
+
+            // Memory estimation formula for Full Training (AdamW):
+            // Model Weights = params * bytesPerParam
+            // Gradients = params * bytesPerParam
+            // Adam Optimizer States = params * 8 bytes (FP32 master weights & momentum)
+            // Activation & overhead overhead factor = ~20%
+            const weightMem = params * bytesPerParam;
+            const gradMem = params * bytesPerParam;
+            const adamMem = params * 8; // FP32 Adam States
+            const totalVramNeededGB = Math.round((weightMem + gradMem + adamMem) * 1.25);
+
+            let singleGpuVRAM = 80;
+            if (gpuType === '192') singleGpuVRAM = 192;
+
+            const minGpus = Math.max(8, Math.ceil(totalVramNeededGB / (singleGpuVRAM * 0.8)));
+
+            // Parallelism Recommendation
+            let rec = "DP=1, TP=8";
+            if (params >= 70) rec = "TP=8, PP=2, DP=" + Math.ceil(minGpus / 16);
+            if (params >= 405) rec = "TP=8, PP=8, DP=" + Math.ceil(minGpus / 64);
+
+            document.getElementById('res-vram').innerText = totalVramNeededGB + " GB";
+            document.getElementById('res-gpus').innerText = minGpus + " GPU (" + gpuType.split('-')[0].toUpperCase() + ")";
+            document.getElementById('res-parallel').innerText = rec;
+        }
+
+        // Init Calculator on load
+        calculateCluster();
+    </script>
+</body>
+</html>
