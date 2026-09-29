@@ -1,0 +1,601 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Matriks Delik: UU PDP vs UU ITE</title>
+    <style>
+        :root {
+            --primary: #1e3a8a;
+            --primary-light: #3b82f6;
+            --pdp-color: #0d9488;
+            --ite-color: #b91c1c;
+            --bg-body: #f8fafc;
+            --card-bg: #ffffff;
+            --text-main: #0f172a;
+            --text-muted: #475569;
+            --border: #e2e8f0;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-body);
+            color: var(--text-main);
+            padding: 24px;
+            line-height: 1.5;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        header {
+            background: linear-gradient(135deg, #1e3a8a, #0f172a);
+            color: #ffffff;
+            padding: 24px;
+            border-radius: 12px;
+            margin-bottom: 24px;
+            box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.1);
+        }
+
+        header h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            font-size: 0.95rem;
+            color: #cbd5e1;
+        }
+
+        .badge-bar {
+            display: flex;
+            gap: 12px;
+            margin-top: 12px;
+            flex-wrap: wrap;
+        }
+
+        .badge {
+            font-size: 0.75rem;
+            padding: 4px 10px;
+            border-radius: 9999px;
+            font-weight: 600;
+            background: rgba(255, 255, 255, 0.15);
+            color: #fff;
+        }
+
+        .preset-section {
+            background: var(--card-bg);
+            padding: 16px 20px;
+            border-radius: 10px;
+            border: 1px solid var(--border);
+            margin-bottom: 24px;
+            display: flex;
+            align-items: center;
+            gap: 16px;
+            flex-wrap: wrap;
+        }
+
+        .preset-section label {
+            font-weight: 600;
+            font-size: 0.9rem;
+            color: var(--text-main);
+            white-space: nowrap;
+        }
+
+        .preset-btn {
+            background: #f1f5f9;
+            border: 1px solid #cbd5e1;
+            padding: 6px 12px;
+            border-radius: 6px;
+            font-size: 0.85rem;
+            cursor: pointer;
+            transition: all 0.2s;
+            font-weight: 500;
+        }
+
+        .preset-btn:hover {
+            background: #e2e8f0;
+            border-color: #94a3b8;
+        }
+
+        .grid-layout {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 24px;
+        }
+
+        @media (max-width: 900px) {
+            .grid-layout {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        .card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            border: 1px solid var(--border);
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+        }
+
+        .card-title {
+            font-size: 1.1rem;
+            font-weight: 700;
+            margin-bottom: 16px;
+            padding-bottom: 8px;
+            border-bottom: 2px solid var(--border);
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .element-group {
+            margin-bottom: 16px;
+        }
+
+        .element-group-title {
+            font-size: 0.8rem;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            color: var(--text-muted);
+            font-weight: 700;
+            margin-bottom: 8px;
+        }
+
+        .checkbox-label {
+            display: flex;
+            align-items: flex-start;
+            gap: 10px;
+            padding: 10px;
+            border-radius: 6px;
+            border: 1px solid var(--border);
+            margin-bottom: 8px;
+            cursor: pointer;
+            transition: background 0.15s;
+            font-size: 0.9rem;
+        }
+
+        .checkbox-label:hover {
+            background: #f8fafc;
+        }
+
+        .checkbox-label input[type="checkbox"] {
+            margin-top: 3px;
+            width: 16px;
+            height: 16px;
+            accent-color: var(--primary);
+            cursor: pointer;
+        }
+
+        .stat-tag {
+            font-size: 0.75rem;
+            padding: 2px 8px;
+            border-radius: 4px;
+            font-weight: 600;
+        }
+
+        .pdp-tag {
+            background-color: #ccfbf1;
+            color: #0f766e;
+        }
+
+        .ite-tag {
+            background-color: #fee2e2;
+            color: #991b1b;
+        }
+
+        .result-box {
+            padding: 16px;
+            border-radius: 8px;
+            margin-bottom: 16px;
+            border-left: 4px solid #cbd5e1;
+            background: #f8fafc;
+        }
+
+        .result-box.active-pdp {
+            border-left-color: var(--pdp-color);
+            background: #f0fdf4;
+        }
+
+        .result-box.active-ite {
+            border-left-color: var(--ite-color);
+            background: #fef2f2;
+        }
+
+        .result-box h4 {
+            font-size: 0.95rem;
+            margin-bottom: 4px;
+            display: flex;
+            justify-content: space-between;
+        }
+
+        .result-box p {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+
+        .law-ref {
+            font-size: 0.8rem;
+            font-weight: 600;
+            color: var(--primary);
+            margin-top: 6px;
+        }
+
+        .concursus-banner {
+            background: #fef3c7;
+            border: 1px solid #f59e0b;
+            color: #92400e;
+            padding: 12px;
+            border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            margin-top: 16px;
+            display: none;
+        }
+
+        .reasoning-box {
+            background: #eff6ff;
+            border: 1px solid #bfdbfe;
+            border-radius: 8px;
+            padding: 16px;
+            margin-top: 16px;
+            font-size: 0.88rem;
+            color: #1e40af;
+        }
+
+        .reasoning-box h4 {
+            margin-bottom: 6px;
+            font-weight: 700;
+        }
+
+        .reset-btn {
+            background: transparent;
+            border: none;
+            color: var(--primary-light);
+            font-size: 0.85rem;
+            cursor: pointer;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <header>
+        <h1>Matriks Kualifikasi Delik Hukum Siber & Data</h1>
+        <p>Analisis Komparatif Kasus berdasarkan Undang-Undang Perlindungan Data Pribadi (PDP) dan Undang-Undang Informasi dan Transaksi Elektronik (ITE)</p>
+        <div class="badge-bar">
+            <span class="badge">UU No. 27 Tahun 2022 (UU PDP)</span>
+            <span class="badge">UU No. 1 Tahun 2024 (UU ITE)</span>
+            <span class="badge">Modul Interaktif S1 Hukum</span>
+        </div>
+    </header>
+
+    <!-- Preset Skenario -->
+    <div class="preset-section">
+        <label>⚡ Skenario Kasus Uji Coba:</label>
+        <button class="preset-btn" onclick="loadPreset('hacking_db')">Peretasan Database Nasabah</button>
+        <button class="preset-btn" onclick="loadPreset('insider_leak')">Orang Dalam Jual Data Klien</button>
+        <button class="preset-btn" onclick="loadPreset('defacing')">Pengerusakan Website (Defacing)</button>
+        <button class="preset-btn" onclick="loadPreset('fake_identity')">Pemalsuan KTP Digital Pinjol</button>
+    </div>
+
+    <div class="grid-layout">
+        <!-- Kolom Kiri: Input Unsur Fakta Hukum -->
+        <div class="card">
+            <div class="card-title">
+                <span>1. Unsur Perbuatan & Niat (Fakta)</span>
+                <button class="reset-btn" onclick="resetForm()">Reset Pilihan</button>
+            </div>
+
+            <!-- Group Actus Reus Akses/Sistem -->
+            <div class="element-group">
+                <div class="element-group-title">A. Perbuatan Terhadap Sistem & Dokumen (ITE Focus)</div>
+                
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_akses_ilegal" onchange="evaluateMatrix()">
+                    <span>Mengakses Komputer / Sistem Elektronik tanpa hak / menerobos pengaman.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_intersepsi" onchange="evaluateMatrix()">
+                    <span>Penyadapan / Intersepsi transmisi informasi elektronik non-publik.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_ubah_data" onchange="evaluateMatrix()">
+                    <span>Mengubah, menambah, mengurangi, atau merusak Dokumen Elektronik.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_ganggu_sistem" onchange="evaluateMatrix()">
+                    <span>Mengganggu atau membuat Sistem Elektronik tidak bekerja sebagaimana mestinya.</span>
+                </label>
+            </div>
+
+            <!-- Group Actus Reus Data Pribadi -->
+            <div class="element-group">
+                <div class="element-group-title">B. Perbuatan Terhadap Data Pribadi (PDP Focus)</div>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_peroleh_pdp" onchange="evaluateMatrix()">
+                    <span>Memperoleh / Mengumpulkan Data Pribadi yang bukan miliknya secara melawan hukum.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_ungkap_pdp" onchange="evaluateMatrix()">
+                    <span>Pengungkapan Data Pribadi milik orang lain secara melawan hukum.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_guna_pdp" onchange="evaluateMatrix()">
+                    <span>Menggunakan / Memanfaatkan Data Pribadi secara melawan hukum.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_palsu_pdp" onchange="evaluateMatrix()">
+                    <span>Memalsukan Data Pribadi dengan maksud menyesatkan/menguntungkan diri.</span>
+                </label>
+            </div>
+
+            <!-- Group Mens Rea & Impact -->
+            <div class="element-group">
+                <div class="element-group-title">C. Niat Batin (Mens Rea) & Dampak</div>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_untung_diri" onchange="evaluateMatrix()">
+                    <span>Bertujuan menguntungkan diri sendiri atau orang lain.</span>
+                </label>
+
+                <label class="checkbox-label">
+                    <input type="checkbox" id="f_rugikan_orang" onchange="evaluateMatrix()">
+                    <span>Tindakan mengakibatkan kerugian finansial / materiil pada korban.</span>
+                </label>
+            </div>
+        </div>
+
+        <!-- Kolom Kanan: Hasil Kualifikasi Delik & Analisis -->
+        <div class="card">
+            <div class="card-title">
+                <span>2. Hasil Kualifikasi Delik Hukum</span>
+            </div>
+
+            <div id="pdp_results">
+                <!-- Hasil UU PDP akan muncul di sini -->
+            </div>
+
+            <div id="ite_results">
+                <!-- Hasil UU ITE akan muncul di sini -->
+            </div>
+
+            <!-- Banner Concursus / Batal/Gabungan -->
+            <div id="concursus_banner" class="concursus-banner">
+                ⚠️ **Penggabungan Tindak Pidana (Concursus/Pemberatan):**
+                <br><span id="concursus_text"></span>
+            </div>
+
+            <!-- Penalaran Hukum (Legal Reasoning) -->
+            <div class="reasoning-box">
+                <h4>⚖️ Analisis Penalaran Hukum (Legal Reasoning):</h4>
+                <p id="reasoning_text">Pilih salah satu skenario di atas atau centang kombinasi unsur fakta hukum di sebelah kiri untuk melihat kualifikasi delik secara otomatis.</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    function evaluateMatrix() {
+        // Ambil status centang
+        const aksIlegal = document.getElementById('f_akses_ilegal').checked;
+        const intersepsi = document.getElementById('f_intersepsi').checked;
+        const ubahData = document.getElementById('f_ubah_data').checked;
+        const gangguSistem = document.getElementById('f_ganggu_sistem').checked;
+
+        const perolehPDP = document.getElementById('f_peroleh_pdp').checked;
+        const ungkapPDP = document.getElementById('f_ungkap_pdp').checked;
+        const gunaPDP = document.getElementById('f_guna_pdp').checked;
+        const palsuPDP = document.getElementById('f_palsu_pdp').checked;
+
+        const untungDiri = document.getElementById('f_untung_diri').checked;
+        const rugikanOrang = document.getElementById('f_rugikan_orang').checked;
+
+        let pdpHTML = '';
+        let iteHTML = '';
+        let pdpMatched = false;
+        let iteMatched = false;
+
+        let reasoningList = [];
+
+        // --- EVALUASI UNDANG-UNDANG PERLINDUNGAN DATA PRIBADI (PDP) ---
+        if (perolehPDP && untungDiri) {
+            pdpMatched = true;
+            pdpHTML += createResultCard(
+                "Perolehan Data Pribadi Ilegal",
+                "Pasal 65 ayat (1) jo. Pasal 67 ayat (1) Undang-Undang Perlindungan Data Pribadi (PDP)",
+                "Sanksi Pidana Penjara maks. 5 tahun dan/atau Denda maks. Rp5 Miliar.",
+                "pdp"
+            );
+            reasoningList.push("Tindakan memperoleh/mengumpulkan Data Pribadi yang bukan miliknya secara melawan hukum dengan maksud menguntungkan diri sendiri memenuhi unsur pidana Pasal 65 ayat (1) UU PDP.");
+        }
+
+        if (ungkapPDP) {
+            pdpMatched = true;
+            pdpHTML += createResultCard(
+                "Pengungkapan Data Pribadi Tanpa Hak",
+                "Pasal 65 ayat (2) jo. Pasal 67 ayat (2) Undang-Undang Perlindungan Data Pribadi (PDP)",
+                "Sanksi Pidana Penjara maks. 4 tahun dan/atau Denda maks. Rp4 Miliar.",
+                "pdp"
+            );
+            reasoningList.push("Menyebarluaskan atau mengungkapkan Data Pribadi tanpa persetujuan pemilik data memenuhi delik Pasal 65 ayat (2) UU PDP.");
+        }
+
+        if (gunaPDP && untungDiri) {
+            pdpMatched = true;
+            pdpHTML += createResultCard(
+                "Penggunaan Data Pribadi Ilegal",
+                "Pasal 65 ayat (3) jo. Pasal 67 ayat (3) Undang-Undang Perlindungan Data Pribadi (PDP)",
+                "Sanksi Pidana Penjara maks. 5 tahun dan/atau Denda maks. Rp5 Miliar.",
+                "pdp"
+            );
+            reasoningList.push("Memanfaatkan atau mempergunakan Data Pribadi secara melawan hukum untuk kepentingan tertentu melanggar Pasal 65 ayat (3) UU PDP.");
+        }
+
+        if (palsuPDP) {
+            pdpMatched = true;
+            pdpHTML += createResultCard(
+                "Pemalsuan Data Pribadi",
+                "Pasal 66 jo. Pasal 68 Undang-Undang Perlindungan Data Pribadi (PDP)",
+                "Sanksi Pidana Penjara maks. 6 tahun dan/atau Denda maks. Rp6 Miliar.",
+                "pdp"
+            );
+            reasoningList.push("Tindakan memalsukan Data Pribadi demi keuntungan pribadi yang dapat merugikan orang lain dikualifikasikan sebagai delik Pasal 66 UU PDP.");
+        }
+
+        // --- EVALUASI UNDANG-UNDANG INFORMASI DAN TRANSAKSI ELEKTRONIK (ITE) ---
+        if (aksIlegal) {
+            iteMatched = true;
+            let ancaman = "Pidana Penjara maks. 6 tahun dan/atau Denda maks. Rp600 Juta.";
+            if (untungDiri || rugikanOrang) {
+                ancaman = "Pidana Penjara maks. 8 tahun dan/atau Denda maks. Rp800 Juta (dengan menerobos pengaman).";
+            }
+            iteHTML += createResultCard(
+                "Akses Ilegal (Illegal Access)",
+                "Pasal 30 jo. Pasal 46 Undang-Undang Informasi dan Transaksi Elektronik (ITE)",
+                ancaman,
+                "ite"
+            );
+            reasoningList.push("Tindakan menembus/mengakses sistem komputer atau jaringan secara tanpa hak difokuskan pada pelanggaran integritas sistem elektronik berdasarkan Pasal 30 UU ITE.");
+        }
+
+        if (intersepsi) {
+            iteMatched = true;
+            iteHTML += createResultCard(
+                "Penyadapan Ilegal (Illegal Interception)",
+                "Pasal 31 jo. Pasal 47 Undang-Undang Informasi dan Transaksi Elektronik (ITE)",
+                "Sanksi Pidana Penjara maks. 10 tahun dan/atau Denda maks. Rp800 Juta.",
+                "ite"
+            );
+            reasoningList.push("Intersepsi transmisi informasi elektronik merupakan kejahatan terhadap privasi komunikasi dan sistem elektronik under Pasal 31 UU ITE.");
+        }
+
+        if (ubahData) {
+            iteMatched = true;
+            iteHTML += createResultCard(
+                "Pengerusakan / Interfrensi Data (Data Interference)",
+                "Pasal 32 jo. Pasal 48 Undang-Undang Informasi dan Transaksi Elektronik (ITE)",
+                "Sanksi Pidana Penjara maks. 8-10 tahun dan/atau Denda maks. Rp2-5 Miliar.",
+                "ite"
+            );
+            reasoningList.push("Mengubah, merusak, atau memindahkan data/dokumen elektronik orang lain melanggar Pasal 32 UU ITE.");
+        }
+
+        if (gangguSistem) {
+            iteMatched = true;
+            iteHTML += createResultCard(
+                "Gangguan Sistem (System Interference)",
+                "Pasal 33 jo. Pasal 49 Undang-Undang Informasi dan Transaksi Elektronik (ITE)",
+                "Sanksi Pidana Penjara maks. 10 tahun dan/atau Denda maks. Rp10 Miliar.",
+                "ite"
+            );
+            reasoningList.push("Membuat sistem tidak dapat diakses atau melumpuhkan server merupakan delik berat gangguan sistem berdasarkan Pasal 33 UU ITE.");
+        }
+
+        // Rendering Tampilan Hasil
+        const pdpContainer = document.getElementById('pdp_results');
+        const iteContainer = document.getElementById('ite_results');
+        const concursusBanner = document.getElementById('concursus_banner');
+        const reasoningText = document.getElementById('reasoning_text');
+
+        pdpContainer.innerHTML = pdpMatched ? pdpHTML : '';
+        iteContainer.innerHTML = iteMatched ? iteHTML : '';
+
+        if (!pdpMatched && !iteMatched) {
+            pdpContainer.innerHTML = '<div class="result-box"><p>Belum ada unsur perbuatan pidana yang terpenuhi.</p></div>';
+            reasoningText.innerText = 'Silakan pilih centang pada unsur fakta di sebelah kiri untuk memulai analisis kualifikasi delik.';
+            concursusBanner.style.display = 'none';
+            return;
+        }
+
+        // Analisis Concursus (Penggabungan Tindak Pidana)
+        if (pdpMatched && iteMatched) {
+            concursusBanner.style.display = 'block';
+            document.getElementById('concursus_text').innerText = 
+                "Terjadi kualifikasi ganda (Concursus Realis / Idealist). Perbuatan memenuhi unsur kejahatan sistem pada Undang-Undang Informasi dan Transaksi Elektronik (ITE) sekaligus kejahatan terhadap perlindungan data pada Undang-Undang Perlindungan Data Pribadi (PDP). Jaksa Penuntut Umum dapat menyusun surat dakwaan secara Kombinasi / Kumulatif.";
+        } else {
+            concursusBanner.style.display = 'none';
+        }
+
+        // Tampilkan Ringkasan Penalaran Hukum
+        reasoningText.innerHTML = reasoningList.join('<br><br>');
+    }
+
+    function createResultCard(title, law, penalty, type) {
+        const tagClass = type === 'pdp' ? 'pdp-tag' : 'ite-tag';
+        const typeLabel = type === 'pdp' ? 'UU PDP' : 'UU ITE';
+        const boxClass = type === 'pdp' ? 'active-pdp' : 'active-ite';
+
+        return `
+            <div class="result-box ${boxClass}">
+                <h4>
+                    <span>${title}</span>
+                    <span class="stat-tag ${tagClass}">${typeLabel}</span>
+                </h4>
+                <div class="law-ref">${law}</div>
+                <p style="margin-top: 6px;"><strong>Ancaman Hukum:</strong> ${penalty}</p>
+            </div>
+        `;
+    }
+
+    function resetForm() {
+        const inputs = document.querySelectorAll('input[type="checkbox"]');
+        inputs.forEach(i => i.checked = false);
+        evaluateMatrix();
+    }
+
+    function loadPreset(presetName) {
+        resetForm();
+
+        if (presetName === 'hacking_db') {
+            // Peretasan Database & Penjualan Data Nasabah (Akses Ilegal + Ubah Data + PDP)
+            document.getElementById('f_akses_ilegal').checked = true;
+            document.getElementById('f_peroleh_pdp').checked = true;
+            document.getElementById('f_ungkap_pdp').checked = true;
+            document.getElementById('f_untung_diri').checked = true;
+            document.getElementById('f_rugikan_orang').checked = true;
+        } else if (presetName === 'insider_leak') {
+            // Orang Dalam Mengambil & Menjual File Excel Data Klien (Tanpa Hacking, Murni PDP)
+            document.getElementById('f_peroleh_pdp').checked = true;
+            document.getElementById('f_ungkap_pdp').checked = true;
+            document.getElementById('f_guna_pdp').checked = true;
+            document.getElementById('f_untung_diri').checked = true;
+        } else if (presetName === 'defacing') {
+            // Merusak Tampilan Website Tanpa Mengambil Data Pribadi (Murni ITE)
+            document.getElementById('f_akses_ilegal').checked = true;
+            document.getElementById('f_ubah_data').checked = true;
+            document.getElementById('f_ganggu_sistem').checked = true;
+        } else if (presetName === 'fake_identity') {
+            // Memalsukan KTP Digital untuk Pinjol (Pemalsuan Data Pribadi PDP)
+            document.getElementById('f_palsu_pdp').checked = true;
+            document.getElementById('f_guna_pdp').checked = true;
+            document.getElementById('f_untung_diri').checked = true;
+            document.getElementById('f_rugikan_orang').checked = true;
+        }
+
+        evaluateMatrix();
+    }
+
+    // Inisialisasi awal saat halaman dimuat
+    evaluateMatrix();
+</script>
+
+</body>
+</html>
