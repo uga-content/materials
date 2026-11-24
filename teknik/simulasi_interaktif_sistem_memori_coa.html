@@ -1,0 +1,964 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Media Pembelajaran Interaktif: Sistem Memori (COA)</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f8fafc;
+        }
+        .tab-active {
+            background-color: #1e3a8a;
+            color: #ffffff;
+            border-color: #1e3a8a;
+        }
+        .pulse-signal {
+            animation: pulseAnim 1s infinite;
+        }
+        @keyframes pulseAnim {
+            0%, 100% { opacity: 1; transform: scale(1); }
+            50% { opacity: 0.6; transform: scale(1.03); }
+        }
+        .flow-line {
+            transition: all 0.4s ease;
+        }
+        /* Custom scrollbar */
+        ::-webkit-scrollbar {
+            width: 6px;
+            height: 6px;
+        }
+        ::-webkit-scrollbar-thumb {
+            background: #cbd5e1;
+            border-radius: 9999px;
+        }
+    </style>
+</head>
+<body class="text-slate-800 min-h-screen flex flex-col">
+
+    <!-- Header / Navbar -->
+    <header class="bg-gradient-to-r from-blue-950 via-blue-900 to-indigo-900 text-white shadow-lg sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 py-4 flex flex-col md:flex-row items-center justify-between gap-4">
+            <div class="flex items-center gap-3">
+                <div class="bg-amber-400 text-blue-950 font-extrabold px-3 py-1.5 rounded-lg text-sm tracking-wider shadow">
+                    COA • WEEK 12
+                </div>
+                <div>
+                    <h1 class="text-lg md:text-xl font-bold tracking-tight">Visualisasi Interaktif Sistem Memori</h1>
+                    <p class="text-xs text-blue-200">Computer Organization & Architecture • Teknik Informatika</p>
+                </div>
+            </div>
+            <div class="flex items-center gap-2 text-xs bg-blue-950/60 px-3 py-1.5 rounded-full border border-blue-700">
+                <span class="w-2 h-2 rounded-full bg-emerald-400 animate-ping"></span>
+                <span>Mode Presentasi Dosen Aktif</span>
+            </div>
+        </div>
+
+        <!-- Navigation Tabs -->
+        <nav class="bg-white/10 backdrop-blur-sm border-t border-white/10 overflow-x-auto">
+            <div class="max-w-7xl mx-auto px-4 flex space-x-1 py-2 min-w-max">
+                <button onclick="switchTab('tab-cell')" id="btn-tab-cell" class="tab-btn tab-active px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <span>1. Sel Memori & DRAM Refresh</span>
+                </button>
+                <button onclick="switchTab('tab-hierarchy')" id="btn-tab-hierarchy" class="tab-btn text-blue-100 hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <span>2. Hirarki & Lokalitas</span>
+                </button>
+                <button onclick="switchTab('tab-cache')" id="btn-tab-cache" class="tab-btn text-blue-100 hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <span>3. Simulator Cache & AMAT</span>
+                </button>
+                <button onclick="switchTab('tab-vm')" id="btn-tab-vm" class="tab-btn text-blue-100 hover:bg-white/10 px-4 py-2 rounded-lg text-sm font-medium transition flex items-center gap-2">
+                    <span>4. Virtual Memory, TLB & Page Table</span>
+                </button>
+            </div>
+        </nav>
+    </header>
+
+    <!-- Main Content Container -->
+    <main class="flex-grow max-w-7xl w-full mx-auto px-4 py-6">
+
+        <!-- ===================================================================== -->
+        <!-- TAB 1: MEMORY CELL OPERATION & SRAM vs DRAM REFRESH                   -->
+        <!-- ===================================================================== -->
+        <section id="tab-cell" class="tab-content space-y-6">
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">Konsep Dasar 1-Bit</span>
+                        <h2 class="text-2xl font-bold text-slate-900 mt-1">Operasi Dasar Sel Memori (Write & Read)</h2>
+                        <p class="text-sm text-slate-500">Setiap sel memori menyimpan 1-bit data (0 atau 1) menggunakan 3 jalur sinyal utama: <b>Select</b>, <b>Control</b>, dan <b>Data In/Sense</b>.</p>
+                    </div>
+                    <div class="flex gap-2 bg-slate-100 p-1.5 rounded-xl">
+                        <button onclick="setCellMode('WRITE')" id="btn-mode-write" class="px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white shadow transition">Mode WRITE (Tulis)</button>
+                        <button onclick="setCellMode('READ')" id="btn-mode-read" class="px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition">Mode READ (Baca)</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-8 items-center">
+                    <!-- Controls -->
+                    <div class="lg:col-span-4 space-y-4 bg-slate-50 p-5 rounded-xl border border-slate-200">
+                        <h3 class="font-bold text-slate-800 text-sm uppercase tracking-wide">Panel Kontrol Sinyal</h3>
+                        
+                        <div class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                            <div>
+                                <div class="font-semibold text-sm">1. Sinyal Select</div>
+                                <div class="text-xs text-slate-500">Mengaktifkan sel memori target</div>
+                            </div>
+                            <button onclick="toggleSelect()" id="btn-select" class="px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white">AKTIF (1)</button>
+                        </div>
+
+                        <div id="write-data-control" class="flex items-center justify-between p-3 bg-white rounded-lg border border-slate-200">
+                            <div>
+                                <div class="font-semibold text-sm">2. Data In (Bit)</div>
+                                <div class="text-xs text-slate-500">Nilai biner yang akan ditulis</div>
+                            </div>
+                            <div class="flex gap-1">
+                                <button onclick="setInputBit(0)" id="btn-bit-0" class="w-9 h-9 rounded-lg font-bold text-sm border border-slate-300 bg-white">0</button>
+                                <button onclick="setInputBit(1)" id="btn-bit-1" class="w-9 h-9 rounded-lg font-bold text-sm border border-blue-600 bg-blue-600 text-white">1</button>
+                            </div>
+                        </div>
+
+                        <button onclick="executeCellOp()" class="w-full py-3 bg-indigo-600 hover:bg-indigo-700 text-white font-bold rounded-xl shadow-md transition transform active:scale-95">
+                            ▶ Jalankan Sinyal Control
+                        </button>
+
+                        <div id="cell-log" class="p-3 bg-blue-950 text-blue-100 rounded-lg text-xs font-mono leading-relaxed">
+                            Status: Siap. Pilih mode WRITE atau READ lalu tekan Jalankan.
+                        </div>
+                    </div>
+
+                    <!-- Interactive SVG Diagram -->
+                    <div class="lg:col-span-8 flex flex-col items-center justify-center bg-slate-900 rounded-2xl p-6 text-white relative overflow-hidden">
+                        <div class="text-xs text-slate-400 uppercase tracking-widest mb-2">Diagram Sinyal Sel Memori</div>
+                        <svg viewBox="0 0 600 280" class="w-full max-w-xl h-auto">
+                            <!-- Control Line (Top) -->
+                            <line id="line-control" x1="300" y1="30" x2="300" y2="95" stroke="#64748b" stroke-width="4" />
+                            <polygon id="arrow-control" points="300,105 292,90 308,90" fill="#64748b" />
+                            <text x="300" y="20" fill="#fbbf24" font-size="14" font-weight="bold" text-anchor="middle">CONTROL (<tspan id="svg-ctrl-label">WRITE</tspan>)</text>
+
+                            <!-- Select Line (Left) -->
+                            <line id="line-select" x1="70" y1="155" x2="210" y2="155" stroke="#10b981" stroke-width="4" />
+                            <polygon id="arrow-select" points="220,155 205,147 205,163" fill="#10b981" />
+                            <text x="135" y="140" fill="#34d399" font-size="14" font-weight="bold" text-anchor="middle">SELECT = <tspan id="svg-sel-val">1</tspan></text>
+
+                            <!-- Data In / Sense Line (Right) -->
+                            <line id="line-data" x1="380" y1="155" x2="530" y2="155" stroke="#38bdf8" stroke-width="4" />
+                            <!-- Arrow pointing IN for Write -->
+                            <polygon id="arrow-data-in" points="380,155 395,147 395,163" fill="#38bdf8" />
+                            <!-- Arrow pointing OUT for Read -->
+                            <polygon id="arrow-data-out" points="535,155 520,147 520,163" fill="#f43f5e" class="hidden" />
+                            <text id="svg-data-label" x="460" y="140" fill="#38bdf8" font-size="14" font-weight="bold" text-anchor="middle">DATA IN = 1</text>
+
+                            <!-- Memory Cell Box -->
+                            <rect x="220" y="105" width="160" height="100" rx="14" fill="#1e293b" stroke="#3b82f6" stroke-width="3" />
+                            <text x="300" y="132" fill="#94a3b8" font-size="12" font-weight="bold" text-anchor="middle">MEMORY CELL</text>
+                            <text id="svg-cell-value" x="300" y="178" fill="#ffffff" font-size="42" font-weight="extrabold" text-anchor="middle">0</text>
+                        </svg>
+                        <div class="mt-2 text-xs text-slate-300 text-center max-w-md">
+                            *Catatan Kuliah: Pada operasi <b>Write</b>, jalur data berfungsi sebagai input. Pada operasi <b>Read</b>, jalur yang sama berfungsi sebagai <i>Sense</i> untuk membaca muatan sel.
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- DRAM vs SRAM & Capacitor Leakage Simulation -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="border-b border-slate-100 pb-4 mb-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-rose-700 bg-rose-50 px-2.5 py-1 rounded-md">Internal Memory Architecture</span>
+                    <h2 class="text-xl font-bold text-slate-900 mt-1">Mengapa DRAM Butuh Refresh (tRFC) Sedangkan SRAM Tidak?</h2>
+                    <p class="text-sm text-slate-500">Simulasi kebocoran muatan kapasitor pada sel DRAM (1 Transistor + 1 Kapasitor) dibandingkan Flip-Flop 6-Transistor pada SRAM.</p>
+                </div>
+
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <!-- DRAM Simulator -->
+                    <div class="border-2 border-amber-200 bg-amber-50/40 rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-900">DRAM (Dynamic RAM)</h3>
+                                <p class="text-xs text-slate-600">Digunakan pada <b>Main Memory</b> (DDR4 / DDR5)</p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-amber-200 text-amber-900 text-xs font-bold rounded-full">1T + 1C (Padat & Murah)</span>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-amber-200">
+                            <div class="flex justify-between text-xs font-semibold mb-1">
+                                <span>Muatan Kapasitor (Bit = <span id="dram-bit-state" class="text-blue-600 font-bold">1</span>)</span>
+                                <span id="dram-charge-pct">100%</span>
+                            </div>
+                            <div class="w-full bg-slate-200 h-5 rounded-full overflow-hidden">
+                                <div id="dram-charge-bar" class="bg-emerald-500 h-full transition-all duration-200" style="width: 100%"></div>
+                            </div>
+                            <div class="flex justify-between text-[11px] text-slate-400 mt-1">
+                                <span>0% (Hilang / Bit 0)</span>
+                                <span class="text-rose-600 font-semibold">Ambang Batas Baca (50%)</span>
+                                <span>100% (Penuh / Bit 1)</span>
+                            </div>
+                        </div>
+
+                        <div class="flex flex-wrap gap-2">
+                            <button onclick="chargeDram()" class="px-3 py-2 bg-blue-600 hover:bg-blue-700 text-white text-xs font-bold rounded-lg shadow">⚡ Tulis Bit '1' (Isi Kapasitor)</button>
+                            <button onclick="triggerRefresh()" class="px-3 py-2 bg-emerald-600 hover:bg-emerald-700 text-white text-xs font-bold rounded-lg shadow">🔄 Refresh Cycle (tRFC)</button>
+                            <label class="flex items-center gap-1.5 text-xs font-medium bg-white px-3 py-2 rounded-lg border border-slate-200 cursor-pointer">
+                                <input type="checkbox" id="auto-refresh-chk" checked class="rounded text-blue-600">
+                                Auto-Refresh (~64ms)
+                            </label>
+                        </div>
+
+                        <div id="dram-status-msg" class="text-xs p-3 rounded-lg bg-white border border-amber-200 text-slate-700">
+                            Kapasitor penuh. Perhatikan muatan perlahan bocor! Jika tidak di-refresh, data bit '1' akan berubah menjadi '0'. Selama siklus <b>tRFC (350 ns di DDR4)</b>, bank memori terkunci (tidak bisa Read/Write).
+                        </div>
+                    </div>
+
+                    <!-- SRAM Comparison -->
+                    <div class="border-2 border-indigo-200 bg-indigo-50/40 rounded-xl p-5 space-y-4">
+                        <div class="flex justify-between items-center">
+                            <div>
+                                <h3 class="font-bold text-lg text-slate-900">SRAM (Static RAM)</h3>
+                                <p class="text-xs text-slate-600">Digunakan pada <b>CPU Cache (L1, L2, L3)</b></p>
+                            </div>
+                            <span class="px-2.5 py-1 bg-indigo-200 text-indigo-900 text-xs font-bold rounded-full">6 Transistor (Flip-Flop)</span>
+                        </div>
+
+                        <div class="bg-white p-4 rounded-xl border border-indigo-200 space-y-3">
+                            <div class="flex justify-between text-xs font-semibold">
+                                <span>Stabilitas Latch (Selama Daya Listrik Ada)</span>
+                                <span class="text-indigo-600 font-bold">100% Stabil</span>
+                            </div>
+                            <div class="w-full bg-indigo-500 h-5 rounded-full flex items-center justify-center text-[11px] text-white font-bold">
+                                TIDAK PERLU REFRESH (ZERO tRFC PENALTY)
+                            </div>
+                            <div class="grid grid-cols-3 gap-2 pt-2 text-center text-xs">
+                                <div class="bg-slate-50 p-2 rounded-lg border">
+                                    <div class="text-slate-400">Latensi</div>
+                                    <div class="font-bold text-emerald-600">1–5 Cycles</div>
+                                </div>
+                                <div class="bg-slate-50 p-2 rounded-lg border">
+                                    <div class="text-slate-400">Luas Area</div>
+                                    <div class="font-bold text-rose-600">16x DRAM</div>
+                                </div>
+                                <div class="bg-slate-50 p-2 rounded-lg border">
+                                    <div class="text-slate-400">Harga/Byte</div>
+                                    <div class="font-bold text-rose-600">Sangat Mahal</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="text-xs p-3 rounded-lg bg-white border border-indigo-200 text-slate-700">
+                            <b>Tradeoff Arsitektur:</b> Kita tidak bisa membuat seluruh RAM dari SRAM karena ukurannya terlalu besar dan mahal, serta tidak bisa hanya memakai DRAM karena terlalu lambat (50–200 cycles). Solusinya adalah <b>Hirarki Memori</b>!
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- TAB 2: MEMORY HIERARCHY & SOFIA'S BOOK ANALOGY (LOCALITY)             -->
+        <!-- ===================================================================== -->
+        <section id="tab-hierarchy" class="tab-content hidden space-y-6">
+            <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                <!-- Interactive Pyramid -->
+                <div class="lg:col-span-7 bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                    <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">Piramida Memori</span>
+                    <h2 class="text-xl font-bold text-slate-900 mt-1">Hirarki Memori Komputer</h2>
+                    <p class="text-sm text-slate-500 mb-6">Klik setiap tingkat piramida di bawah untuk melihat spesifikasi teknologi, waktu akses, kapasitas, dan biaya.</p>
+
+                    <div class="flex items-center justify-between gap-2 my-4">
+                        <!-- Left Arrow -->
+                        <div class="flex flex-col items-center text-xs font-bold text-rose-600 w-16 text-center">
+                            <span>▲</span>
+                            <span>Speed & Cost/Byte Meningkat</span>
+                        </div>
+
+                        <!-- Pyramid Levels -->
+                        <div class="flex-grow flex flex-col items-center space-y-1.5">
+                            <button onclick="selectHierarchy(0)" class="hier-btn w-1/3 py-2.5 bg-rose-600 hover:bg-rose-700 text-white font-bold text-xs rounded-t-2xl shadow transition transform hover:scale-105">
+                                Registers
+                            </button>
+                            <button onclick="selectHierarchy(1)" class="hier-btn w-1/2 py-2.5 bg-orange-500 hover:bg-orange-600 text-white font-bold text-xs rounded-lg shadow transition transform hover:scale-105">
+                                Cache Memory (L1, L2, L3)
+                            </button>
+                            <button onclick="selectHierarchy(2)" class="hier-btn w-2/3 py-3 bg-amber-500 hover:bg-amber-600 text-white font-bold text-xs rounded-lg shadow transition transform hover:scale-105">
+                                Main / Internal Memory (RAM)
+                            </button>
+                            <button onclick="selectHierarchy(3)" class="hier-btn w-5/6 py-3 bg-teal-600 hover:bg-teal-700 text-white font-bold text-xs rounded-lg shadow transition transform hover:scale-105">
+                                Secondary / External Memory (SSD / HDD)
+                            </button>
+                            <button onclick="selectHierarchy(4)" class="hier-btn w-full py-3 bg-slate-700 hover:bg-slate-800 text-white font-bold text-xs rounded-b-xl shadow transition transform hover:scale-105">
+                                Tertiary / Off-line Storage (Magnetic Tape / Optical)
+                            </button>
+                        </div>
+
+                        <!-- Right Arrow -->
+                        <div class="flex flex-col items-center text-xs font-bold text-emerald-600 w-16 text-center">
+                            <span>Capacity & Access Time Meningkat</span>
+                            <span>▼</span>
+                        </div>
+                    </div>
+
+                    <!-- Selected Level Detail Card -->
+                    <div id="hierarchy-detail" class="mt-6 p-4 bg-slate-50 rounded-xl border border-slate-200">
+                        <!-- Populated by JS -->
+                    </div>
+                </div>
+
+                <!-- Analogi Meja Sofia (Temporal & Spatial Locality) -->
+                <div class="lg:col-span-5 bg-white rounded-2xl shadow-sm border border-slate-200 p-6 flex flex-col justify-between">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-emerald-700 bg-emerald-50 px-2.5 py-1 rounded-md">Analogi Kuliah (Prof. Sarangi)</span>
+                        <h2 class="text-xl font-bold text-slate-900 mt-1">Prinsip Lokalitas: Ruang Kerja Sofia</h2>
+                        <p class="text-sm text-slate-500 mb-4">Mengapa sistem hirarki memori bisa bekerja sangat cepat? Karena program memiliki sifat <b>Temporal</b> dan <b>Spatial Locality</b>.</p>
+
+                        <div class="space-y-3">
+                            <div class="p-3.5 rounded-xl bg-blue-50 border border-blue-200">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-blue-950">📖 Meja Kerja (L1/L2 Cache)</span>
+                                    <span class="text-xs bg-blue-600 text-white px-2 py-0.5 rounded">1–10 ns</span>
+                                </div>
+                                <p class="text-xs text-blue-900 mt-1">Kapasitas kecil. Sofia menaruh buku yang sedang dibaca berulang-ulang di sini (<b>Temporal Locality</b>).</p>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl bg-amber-50 border border-amber-200">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-amber-950">📚 Rak Buku (Main Memory / DRAM)</span>
+                                    <span class="text-xs bg-amber-600 text-white px-2 py-0.5 rounded">30–90 ns</span>
+                                </div>
+                                <p class="text-xs text-amber-900 mt-1">Saat mengambil 1 buku topik COA, Sofia sekalian membawa 1 set buku COA berdekatan ke meja (<b>Spatial Locality / Cache Block</b>).</p>
+                            </div>
+
+                            <div class="p-3.5 rounded-xl bg-slate-100 border border-slate-300">
+                                <div class="flex items-center justify-between">
+                                    <span class="font-bold text-sm text-slate-900">🗄️ Lemari Arsip (Hard Disk / SSD)</span>
+                                    <span class="text-xs bg-slate-700 text-white px-2 py-0.5 rounded">5–20 ms</span>
+                                </div>
+                                <p class="text-xs text-slate-700 mt-1">Kapasitas sangat besar, menyimpan arsip jarang dipakai, tetapi butuh waktu lama untuk mengambilnya.</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="mt-4 p-3 bg-emerald-950 text-emerald-100 rounded-xl text-xs">
+                        💡 <b>Poin Kunci untuk Mahasiswa:</b> CPU tidak mengakses 1 byte dari RAM ke Cache, melainkan 1 <b>Cache Line / Block (32–128 byte)</b> sekaligus untuk memanfaatkan <i>Spatial Locality</i>.
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- TAB 3: CACHE MAPPING SIMULATOR & AMAT CALCULATOR                      -->
+        <!-- ===================================================================== -->
+        <section id="tab-cache" class="tab-content hidden space-y-6">
+            <!-- Interactive Cache Simulator -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <div class="flex flex-col md:flex-row justify-between items-start md:items-center border-b border-slate-100 pb-4 mb-6 gap-4">
+                    <div>
+                        <span class="text-xs font-bold uppercase tracking-wider text-purple-700 bg-purple-50 px-2.5 py-1 rounded-md">Simulasi Pemetaan Cache</span>
+                        <h2 class="text-xl font-bold text-slate-900 mt-1">Direct Mapped vs 2-Way Set Associative Cache</h2>
+                        <p class="text-sm text-slate-500">Simulasikan urutan akses alamat memori untuk melihat <b>Cache Hit</b>, <b>Compulsory Miss</b>, <b>Conflict Miss</b>, dan kebijakan penggantian <b>LRU</b>.</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2">
+                        <select id="cache-mapping-type" onchange="resetCacheSim()" class="bg-slate-100 border border-slate-300 text-sm font-semibold rounded-lg px-3 py-2">
+                            <option value="direct">Direct Mapped (4 Set × 1 Way)</option>
+                            <option value="2way">2-Way Set Associative (2 Set × 2 Way)</option>
+                        </select>
+                        <button onclick="resetCacheSim()" class="px-3 py-2 bg-slate-200 hover:bg-slate-300 text-slate-800 text-sm font-semibold rounded-lg">Reset Cache</button>
+                    </div>
+                </div>
+
+                <!-- Address Input Buttons -->
+                <div class="mb-6">
+                    <div class="text-xs font-bold text-slate-500 uppercase mb-2">Klik Alamat Blok Memori untuk Diakses oleh CPU:</div>
+                    <div class="flex flex-wrap gap-2">
+                        <button onclick="accessCacheBlock(0)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 0 (0000)</button>
+                        <button onclick="accessCacheBlock(4)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 4 (0100)</button>
+                        <button onclick="accessCacheBlock(8)" class="px-3.5 py-2 bg-blue-600 hover:bg-blue-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 8 (1000)</button>
+                        <button onclick="accessCacheBlock(1)" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 1 (0001)</button>
+                        <button onclick="accessCacheBlock(2)" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 2 (0010)</button>
+                        <button onclick="accessCacheBlock(3)" class="px-3.5 py-2 bg-indigo-600 hover:bg-indigo-700 text-white font-mono text-sm font-bold rounded-lg shadow">Block 3 (0011)</button>
+                        <button onclick="runConflictDemo()" class="px-3.5 py-2 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-lg shadow ml-auto">⚡ Demo Conflict Miss (0 → 4 → 0)</button>
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+                    <!-- Cache Table Visual -->
+                    <div class="lg:col-span-7 overflow-x-auto">
+                        <table class="w-full text-left border-collapse rounded-xl overflow-hidden border border-slate-200 text-sm">
+                            <thead class="bg-slate-800 text-white text-xs uppercase">
+                                <tr>
+                                    <th class="p-3">Set Index</th>
+                                    <th class="p-3">Way</th>
+                                    <th class="p-3">Valid Bit</th>
+                                    <th class="p-3">Tag</th>
+                                    <th class="p-3">Data Block</th>
+                                    <th class="p-3">LRU Age</th>
+                                </tr>
+                            </thead>
+                            <tbody id="cache-table-body" class="divide-y divide-slate-200 bg-white font-mono">
+                                <!-- Populated by JS -->
+                            </tbody>
+                        </table>
+                    </div>
+
+                    <!-- Stats & Explanation Log -->
+                    <div class="lg:col-span-5 space-y-4">
+                        <div class="grid grid-cols-3 gap-2 text-center">
+                            <div class="bg-emerald-50 border border-emerald-200 p-3 rounded-xl">
+                                <div class="text-xs text-emerald-700 font-semibold">Cache Hits</div>
+                                <div id="stat-hits" class="text-2xl font-extrabold text-emerald-700">0</div>
+                            </div>
+                            <div class="bg-rose-50 border border-rose-200 p-3 rounded-xl">
+                                <div class="text-xs text-rose-700 font-semibold">Cache Misses</div>
+                                <div id="stat-misses" class="text-2xl font-extrabold text-rose-700">0</div>
+                            </div>
+                            <div class="bg-blue-50 border border-blue-200 p-3 rounded-xl">
+                                <div class="text-xs text-blue-700 font-semibold">Hit Rate</div>
+                                <div id="stat-hitrate" class="text-2xl font-extrabold text-blue-700">0%</div>
+                            </div>
+                        </div>
+
+                        <div id="cache-step-explanation" class="p-4 rounded-xl bg-slate-900 text-slate-100 text-xs font-mono leading-relaxed min-h-[140px]">
+                            Klik salah satu tombol Block di atas untuk memulai simulasi lookup Tag & Index...
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Interactive AMAT Calculator -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-blue-700 bg-blue-50 px-2.5 py-1 rounded-md">Model Matematis Memori</span>
+                <h2 class="text-xl font-bold text-slate-900 mt-1">Kalkulator Interaktif AMAT (Average Memory Access Time)</h2>
+                <p class="text-sm text-slate-500 mb-4">Rumus: <code class="bg-slate-100 px-2 py-0.5 rounded text-blue-800 font-semibold">AMAT = L1_Hit_Time + L1_Miss_Rate × (L2_Hit_Time + L2_Miss_Rate × Main_Memory_Latency)</code></p>
+
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-end">
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">L1 Hit Time (cycles)</label>
+                        <input type="number" id="amat-l1-hit" value="1" min="1" max="10" oninput="calcAMAT()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">L1 Miss Rate (%)</label>
+                        <input type="number" id="amat-l1-miss" value="5" min="0" max="100" oninput="calcAMAT()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">L2 Hit Time (cycles)</label>
+                        <input type="number" id="amat-l2-hit" value="10" min="1" max="50" oninput="calcAMAT()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold">
+                    </div>
+                    <div>
+                        <label class="block text-xs font-bold text-slate-700 mb-1">L2 Local Miss Rate (%)</label>
+                        <input type="number" id="amat-l2-miss" value="40" min="0" max="100" oninput="calcAMAT()" class="w-full border border-slate-300 rounded-lg px-3 py-2 text-sm font-bold">
+                    </div>
+                </div>
+
+                <div class="mt-4 grid grid-cols-1 md:grid-cols-2 gap-4 items-center bg-blue-50 border border-blue-200 p-4 rounded-xl">
+                    <div>
+                        <label class="block text-xs font-bold text-blue-900 mb-1">Main Memory Latency (cycles): <span id="mem-lat-val">300</span> cycles</label>
+                        <input type="range" id="amat-mem-lat" value="300" min="50" max="500" step="10" oninput="calcAMAT()" class="w-full accent-blue-700">
+                    </div>
+                    <div class="flex items-center justify-between bg-white p-4 rounded-xl border border-blue-200">
+                        <div>
+                            <div class="text-xs text-slate-500 font-semibold">Hasil Perhitungan AMAT:</div>
+                            <div class="text-xs text-slate-400">Rata-rata siklus per akses memori</div>
+                        </div>
+                        <div class="text-3xl font-extrabold text-blue-800"><span id="amat-result">7.50</span> <span class="text-sm font-medium">cycles</span></div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- ===================================================================== -->
+        <!-- TAB 4: VIRTUAL MEMORY, TLB & PAGE TABLE SIZE CALCULATOR               -->
+        <!-- ===================================================================== -->
+        <section id="tab-vm" class="tab-content hidden space-y-6">
+            <!-- TLB & Page Table Flowchart Simulator -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-teal-700 bg-teal-50 px-2.5 py-1 rounded-md">Translasi Alamat Virtual ke Fisik</span>
+                <h2 class="text-xl font-bold text-slate-900 mt-1">Alur Kerja MMU, TLB, Page Table & Swap Space</h2>
+                <p class="text-sm text-slate-500 mb-6">Pilih salah satu skenario di bawah untuk mendemonstrasikan bagaimana CPU menerjemahkan Virtual Address menjadi Physical Address.</p>
+
+                <div class="flex flex-wrap gap-3 mb-6">
+                    <button onclick="simulateVM('tlb_hit')" class="px-4 py-2.5 bg-emerald-600 hover:bg-emerald-700 text-white text-sm font-bold rounded-xl shadow transition">
+                        1. Skenario TLB Hit (Tercepat)
+                    </button>
+                    <button onclick="simulateVM('pt_hit')" class="px-4 py-2.5 bg-amber-500 hover:bg-amber-600 text-white text-sm font-bold rounded-xl shadow transition">
+                        2. TLB Miss → Page Table Hit
+                    </button>
+                    <button onclick="simulateVM('page_fault')" class="px-4 py-2.5 bg-rose-600 hover:bg-rose-700 text-white text-sm font-bold rounded-xl shadow transition">
+                        3. Page Fault (Ambil dari Swap Space Disk)
+                    </button>
+                </div>
+
+                <!-- Visual Pipeline -->
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-4 items-center text-center">
+                    <div id="vm-box-cpu" class="p-4 rounded-xl border-2 border-slate-200 bg-slate-50 transition-all">
+                        <div class="text-xs font-bold text-slate-400">LANGKAH 1</div>
+                        <div class="font-bold text-slate-900 mt-1">CPU Virtual Address</div>
+                        <div class="text-xs font-mono bg-white p-1.5 rounded border mt-2">VPN (20b) | Offset (12b)</div>
+                    </div>
+
+                    <div id="vm-box-tlb" class="p-4 rounded-xl border-2 border-slate-200 bg-slate-50 transition-all">
+                        <div class="text-xs font-bold text-slate-400">LANGKAH 2</div>
+                        <div class="font-bold text-slate-900 mt-1">TLB (Cache Translasi)</div>
+                        <div class="text-xs text-slate-500 mt-2">Cek 64 entri CAM (1 cycle)</div>
+                    </div>
+
+                    <div id="vm-box-pt" class="p-4 rounded-xl border-2 border-slate-200 bg-slate-50 transition-all">
+                        <div class="text-xs font-bold text-slate-400">LANGKAH 3</div>
+                        <div class="font-bold text-slate-900 mt-1">Page Table (di RAM)</div>
+                        <div class="text-xs text-slate-500 mt-2">Cek mapping VPN → Frame</div>
+                    </div>
+
+                    <div id="vm-box-ram" class="p-4 rounded-xl border-2 border-slate-200 bg-slate-50 transition-all">
+                        <div class="text-xs font-bold text-slate-400">LANGKAH 4</div>
+                        <div class="font-bold text-slate-900 mt-1">Physical Memory / Disk</div>
+                        <div class="text-xs text-slate-500 mt-2">Frame Number + Offset</div>
+                    </div>
+                </div>
+
+                <div id="vm-explanation" class="mt-6 p-4 rounded-xl bg-slate-900 text-slate-100 text-sm leading-relaxed">
+                    Pilih salah satu tombol skenario di atas untuk melihat penjelasan alur translasi alamat secara bertahap.
+                </div>
+            </div>
+
+            <!-- Page Table Size Comparison (32-bit vs 64-bit Single vs Multi-Level) -->
+            <div class="bg-white rounded-2xl shadow-sm border border-slate-200 p-6">
+                <span class="text-xs font-bold uppercase tracking-wider text-indigo-700 bg-indigo-50 px-2.5 py-1 rounded-md">Analisis Ukuran Page Table</span>
+                <h2 class="text-xl font-bold text-slate-900 mt-1">Mengapa Sistem 64-bit Wajib Menggunakan Multi-Level Page Table?</h2>
+                <p class="text-sm text-slate-500 mb-4">Perbandingan ukuran memori yang habis hanya untuk menyimpan Single-Level Page Table (asumsi Page Size = 4 KB / 12-bit offset, PTE = 4 byte).</p>
+
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <div class="p-4 rounded-xl border border-slate-200 bg-slate-50">
+                        <div class="text-xs font-bold text-blue-700">Arsitektur 32-Bit (Single Level)</div>
+                        <div class="text-2xl font-extrabold text-slate-900 mt-1">4 MB / proses</div>
+                        <p class="text-xs text-slate-600 mt-2">VPN = 32 - 12 = <b>20 bit</b>.<br>Jumlah entri = 2<sup>20</sup> = 1.048.576 page.<br>Ukuran = 1.048.576 × 4 byte = <b>4 MB</b>.<br><span class="text-amber-700 font-semibold">Jika ada 200 proses = 800 MB RAM terbuang!</span></p>
+                    </div>
+
+                    <div class="p-4 rounded-xl border-2 border-rose-300 bg-rose-50">
+                        <div class="text-xs font-bold text-rose-700">Arsitektur 64-Bit (Single Level)</div>
+                        <div class="text-2xl font-extrabold text-rose-700 mt-1">16 Exabyte / proses</div>
+                        <p class="text-xs text-rose-900 mt-2">VPN = 64 - 12 = <b>52 bit</b>.<br>Jumlah entri = 2<sup>52</sup> (4 Kuadriliun page).<br>Ukuran = 2<sup>52</sup> × 4 byte = <b>16 Exabyte</b>.<br><span class="font-bold">TIDAK MASUK AKAL! Tidak ada RAM sebesar ini.</span></p>
+                    </div>
+
+                    <div class="p-4 rounded-xl border-2 border-emerald-300 bg-emerald-50">
+                        <div class="text-xs font-bold text-emerald-700">Solusi: x86-64 4-Level Page Table</div>
+                        <div class="text-2xl font-extrabold text-emerald-700 mt-1">Puluhan KB / proses</div>
+                        <p class="text-xs text-emerald-900 mt-2">Alamat 48-bit dibagi: <b>PML4 (9b) → PDP (9b) → PD (9b) → PT (9b) → Offset (12b)</b>.<br>Hanya tabel yang benar-benar dipakai yang dialokasikan (<i>Sparse Address Space</i>).</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+
+    <!-- Footer -->
+    <footer class="bg-white border-t border-slate-200 py-4 text-center text-xs text-slate-500">
+        Media Bantu Pengajaran Mata Kuliah <b>Computer Organization & Architecture (1604C013)</b> • Teknik Informatika
+    </footer>
+
+    <script>
+        // ==========================================
+        // NAVIGATION TABS
+        // ==========================================
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(el => el.classList.add('hidden'));
+            document.getElementById(tabId).classList.remove('hidden');
+
+            document.querySelectorAll('.tab-btn').forEach(btn => {
+                btn.classList.remove('tab-active');
+                btn.classList.add('text-blue-100');
+            });
+            const activeBtn = document.getElementById('btn-' + tabId);
+            activeBtn.classList.add('tab-active');
+            activeBtn.classList.remove('text-blue-100');
+        }
+
+        // ==========================================
+        // TAB 1: MEMORY CELL OPERATION
+        // ==========================================
+        let cellMode = 'WRITE';
+        let selectSignal = 1;
+        let inputBit = 1;
+        let storedBit = 0;
+
+        function setCellMode(mode) {
+            cellMode = mode;
+            const btnWrite = document.getElementById('btn-mode-write');
+            const btnRead = document.getElementById('btn-mode-read');
+            const writeCtrl = document.getElementById('write-data-control');
+            const arrowIn = document.getElementById('arrow-data-in');
+            const arrowOut = document.getElementById('arrow-data-out');
+            const svgCtrlLabel = document.getElementById('svg-ctrl-label');
+            const svgDataLabel = document.getElementById('svg-data-label');
+            const lineData = document.getElementById('line-data');
+
+            svgCtrlLabel.textContent = mode;
+
+            if (mode === 'WRITE') {
+                btnWrite.className = "px-4 py-2 rounded-lg text-sm font-semibold bg-blue-600 text-white shadow transition";
+                btnRead.className = "px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition";
+                writeCtrl.classList.remove('hidden');
+                arrowIn.classList.remove('hidden');
+                arrowOut.classList.add('hidden');
+                lineData.setAttribute('stroke', '#38bdf8');
+                svgDataLabel.setAttribute('fill', '#38bdf8');
+                svgDataLabel.textContent = `DATA IN = ${inputBit}`;
+            } else {
+                btnRead.className = "px-4 py-2 rounded-lg text-sm font-semibold bg-rose-600 text-white shadow transition";
+                btnWrite.className = "px-4 py-2 rounded-lg text-sm font-semibold text-slate-600 hover:text-slate-900 transition";
+                writeCtrl.classList.add('hidden');
+                arrowIn.classList.add('hidden');
+                arrowOut.classList.remove('hidden');
+                lineData.setAttribute('stroke', '#f43f5e');
+                svgDataLabel.setAttribute('fill', '#f43f5e');
+                svgDataLabel.textContent = `SENSE = ?`;
+            }
+        }
+
+        function toggleSelect() {
+            selectSignal = selectSignal === 1 ? 0 : 1;
+            const btn = document.getElementById('btn-select');
+            const line = document.getElementById('line-select');
+            const arrow = document.getElementById('arrow-select');
+            document.getElementById('svg-sel-val').textContent = selectSignal;
+
+            if (selectSignal === 1) {
+                btn.textContent = 'AKTIF (1)';
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-emerald-600 text-white';
+                line.setAttribute('stroke', '#10b981');
+                arrow.setAttribute('fill', '#10b981');
+            } else {
+                btn.textContent = 'NON-AKTIF (0)';
+                btn.className = 'px-3 py-1.5 rounded-lg text-xs font-bold bg-slate-400 text-white';
+                line.setAttribute('stroke', '#64748b');
+                arrow.setAttribute('fill', '#64748b');
+            }
+        }
+
+        function setInputBit(bit) {
+            inputBit = bit;
+            document.getElementById('btn-bit-0').className = bit === 0 ? "w-9 h-9 rounded-lg font-bold text-sm border border-blue-600 bg-blue-600 text-white" : "w-9 h-9 rounded-lg font-bold text-sm border border-slate-300 bg-white";
+            document.getElementById('btn-bit-1').className = bit === 1 ? "w-9 h-9 rounded-lg font-bold text-sm border border-blue-600 bg-blue-600 text-white" : "w-9 h-9 rounded-lg font-bold text-sm border border-slate-300 bg-white";
+            if (cellMode === 'WRITE') {
+                document.getElementById('svg-data-label').textContent = `DATA IN = ${inputBit}`;
+            }
+        }
+
+        function executeCellOp() {
+            const log = document.getElementById('cell-log');
+            const lineCtrl = document.getElementById('line-control');
+            const arrowCtrl = document.getElementById('arrow-control');
+
+            // Pulse control line
+            lineCtrl.setAttribute('stroke', '#fbbf24');
+            arrowCtrl.setAttribute('fill', '#fbbf24');
+            setTimeout(() => {
+                lineCtrl.setAttribute('stroke', '#64748b');
+                arrowCtrl.setAttribute('fill', '#64748b');
+            }, 600);
+
+            if (selectSignal === 0) {
+                log.innerHTML = `<span class="text-rose-400 font-bold">[GAGAL]</span> Sinyal Select = 0! Sel memori tidak dipilih, sehingga sinyal Control diabaikan.`;
+                return;
+            }
+
+            if (cellMode === 'WRITE') {
+                storedBit = inputBit;
+                document.getElementById('svg-cell-value').textContent = storedBit;
+                log.innerHTML = `<span class="text-emerald-400 font-bold">[WRITE SUKSES]</span> Select=1, Control=WRITE. Bit <b>${storedBit}</b> berhasil ditulis dan disimpan ke dalam sel.`;
+            } else {
+                document.getElementById('svg-data-label').textContent = `SENSE = ${storedBit}`;
+                log.innerHTML = `<span class="text-sky-400 font-bold">[READ SUKSES]</span> Select=1, Control=READ. Jalur <b>Sense</b> mendeteksi nilai biner <b>${storedBit}</b> dari dalam sel tanpa menghapus isinya.`;
+            }
+        }
+
+        // DRAM Capacitor Leakage Interval
+        let dramCharge = 100;
+        setInterval(() => {
+            if (dramCharge > 0) {
+                dramCharge = Math.max(0, dramCharge - 2);
+                const autoRefresh = document.getElementById('auto-refresh-chk')?.checked;
+                if (autoRefresh && dramCharge <= 55) {
+                    triggerRefresh(true);
+                    return;
+                }
+                updateDramUI();
+            }
+        }, 300);
+
+        function chargeDram() {
+            dramCharge = 100;
+            updateDramUI();
+            document.getElementById('dram-status-msg').innerHTML = `⚡ <b>Write Bit '1':</b> Kapasitor terisi penuh (100%). Kebocoran muatan mulai terjadi...`;
+        }
+
+        function triggerRefresh(isAuto = false) {
+            if (dramCharge < 50 && !isAuto) {
+                document.getElementById('dram-status-msg').innerHTML = `⚠️ <b>Terlambat Refresh!</b> Muatan sudah di bawah 50%, sense amplifier membacanya sebagai Bit '0' dan me-refresh-nya menjadi 0.`;
+                dramCharge = 0;
+                updateDramUI();
+                return;
+            }
+            dramCharge = 100;
+            updateDramUI();
+            document.getElementById('dram-status-msg').innerHTML = isAuto
+                ? `🔄 <b>Auto-Refresh (tRFC = 350ns):</b> Sebelum menyentuh batas 50%, Memory Controller menyegarkan muatan kembali ke 100%!`
+                : `🔄 <b>Manual Refresh (tRFC):</b> Muatan kapasitor dipulihkan ke 100%. Selama 350ns bank terkunci dari akses CPU.`;
+        }
+
+        function updateDramUI() {
+            const bar = document.getElementById('dram-charge-bar');
+            const pct = document.getElementById('dram-charge-pct');
+            const state = document.getElementById('dram-bit-state');
+            if (!bar) return;
+
+            bar.style.width = dramCharge + '%';
+            pct.textContent = dramCharge + '%';
+
+            if (dramCharge >= 50) {
+                bar.className = 'bg-emerald-500 h-full transition-all duration-200';
+                state.textContent = '1 (Valid)';
+                state.className = 'text-emerald-600 font-bold';
+            } else {
+                bar.className = 'bg-rose-500 h-full transition-all duration-200';
+                state.textContent = '0 (Data Bocor!)';
+                state.className = 'text-rose-600 font-bold';
+            }
+        }
+
+        // ==========================================
+        // TAB 2: MEMORY HIERARCHY
+        // ==========================================
+        const hierarchyData = [
+            {
+                title: "Level 0: CPU Registers (Inboard Memory)",
+                tech: "Master-Slave D Flip-Flop",
+                access: "1 – 2 ns (< 1 cycle)",
+                capacity: "< 1 KB (Puluhan register 32/64-bit)",
+                cost: "Tertinggi per byte",
+                desc: "Berada langsung di dalam inti prosesor (CPU). Menyimpan operan yang sedang dieksekusi oleh ALU secara instan."
+            },
+            {
+                title: "Level 1–3: Cache Memory (Inboard Memory)",
+                tech: "SRAM (Static RAM - 6 Transistor)",
+                access: "L1: 3–10 ns | L2: 25–50 ns",
+                capacity: "L1: 32–64 KB | L2: 256 KB–4 MB | L3: hingga puluhan MB",
+                cost: "Sangat Mahal",
+                desc: "Menjembatani kecepatan CPU yang sangat tinggi dengan DRAM yang lambat. Memanfaatkan Temporal & Spatial Locality."
+            },
+            {
+                title: "Main / Internal Memory (Inboard Memory)",
+                tech: "DRAM (Dynamic RAM - 1T + 1C)",
+                access: "30 – 90 ns (50–200 cycles)",
+                capacity: "4 GB – 128 GB (Volatile)",
+                cost: "Menengah",
+                desc: "Tempat menyimpan program dan data yang sedang aktif berjalan. Bersifat Volatile (data hilang saat listrik mati)."
+            },
+            {
+                title: "Secondary / External Memory (Outboard Storage)",
+                tech: "Magnetic Disk (HDD), SSD (NAND Flash), Optical (DVD/Blu-Ray)",
+                access: "SSD: ~0.1 ms | HDD: 5 – 20 ms",
+                capacity: "256 GB – Beberapa Terabyte (Non-Volatile)",
+                cost: "Murah per byte",
+                desc: "Penyimpanan persisten untuk sistem operasi, aplikasi, dan file pengguna. Unit transfer berupa Block."
+            },
+            {
+                title: "Tertiary / Off-line Storage",
+                tech: "Magnetic Tape (Robotic Libraries)",
+                access: "10 detik – 3 menit (Sequential Access)",
+                capacity: "Puluhan Terabyte hingga Petabyte",
+                cost: "Paling Murah per byte",
+                desc: "Digunakan untuk backup skala besar dan arsip jangka panjang (data center). Diakses secara sekuensial."
+            }
+        ];
+
+        function selectHierarchy(idx) {
+            const d = hierarchyData[idx];
+            document.getElementById('hierarchy-detail').innerHTML = `
+                <h3 class="font-bold text-base text-blue-950">${d.title}</h3>
+                <p class="text-xs text-slate-600 mt-1 mb-3">${d.desc}</p>
+                <div class="grid grid-cols-2 gap-2 text-xs">
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block">Teknologi Fisik:</span>
+                        <span class="font-bold text-slate-800">${d.tech}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block">Waktu Akses (Latency):</span>
+                        <span class="font-bold text-rose-600">${d.access}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block">Kapasitas Umum:</span>
+                        <span class="font-bold text-emerald-700">${d.capacity}</span>
+                    </div>
+                    <div class="bg-white p-2.5 rounded-lg border border-slate-200">
+                        <span class="text-slate-400 block">Biaya / Byte:</span>
+                        <span class="font-bold text-slate-800">${d.cost}</span>
+                    </div>
+                </div>
+            `;
+        }
+        selectHierarchy(1);
+
+        // ==========================================
+        // TAB 3: CACHE SIMULATOR & AMAT
+        // ==========================================
+        let cacheState = [];
+        let cacheHits = 0;
+        let cacheMisses = 0;
+        let accessCounter = 0;
+
+        function resetCacheSim() {
+            const type = document.getElementById('cache-mapping-type').value;
+            cacheHits = 0;
+            cacheMisses = 0;
+            accessCounter = 0;
+            cacheState = [];
+
+            if (type === 'direct') {
+                for (let s = 0; s < 4; s++) {
+                    cacheState.push({ set: s, way: 0, valid: 0, tag: '-', block: '-', lastUsed: 0 });
+                }
+            } else {
+                for (let s = 0; s < 2; s++) {
+                    for (let w = 0; w < 2; w++) {
+                        cacheState.push({ set: s, way: w, valid: 0, tag: '-', block: '-', lastUsed: 0 });
+                    }
+                }
+            }
+            renderCacheTable();
+            updateCacheStats();
+            document.getElementById('cache-step-explanation').innerHTML = `Cache di-reset (${type === 'direct' ? 'Direct Mapped: 4 Set' : '2-Way Set Associative: 2 Set'}). Silakan akses blok memori.`;
+        }
+
+        function accessCacheBlock(blockAddr) {
+            accessCounter++;
+            const type = document.getElementById('cache-mapping-type').value;
+            const numSets = type === 'direct' ? 4 : 2;
+            const setIndex = blockAddr % numSets;
+            const tag = Math.floor(blockAddr / numSets);
+
+            const setWays = cacheState.filter(entry => entry.set === setIndex);
+            const hitEntry = setWays.find(entry => entry.valid === 1 && entry.tag === tag);
+
+            let logMsg = `<b>Akses ke-${accessCounter}: Block ${blockAddr}</b> (Binary: ${blockAddr.toString(2).padStart(4, '0')})<br>`;
+            logMsg += `• Pemetaan: Set Index = ${blockAddr} mod ${numSets} = <b>Set ${setIndex}</b> | Tag = <b>${tag}</b><br>`;
+
+            if (hitEntry) {
+                cacheHits++;
+                hitEntry.lastUsed = accessCounter;
+                logMsg += `<span class="text-emerald-400 font-bold">✅ CACHE HIT!</span> Ditemukan di Set ${setIndex}, Way ${hitEntry.way}. Data langsung dikirim ke CPU dalam 1 cycle.`;
+            } else {
+                cacheMisses++;
+                // Check invalid way first
+                let targetEntry = setWays.find(entry => entry.valid === 0);
+                let missType = "Compulsory Miss (Cold Miss)";
+
+                if (!targetEntry) {
+                    // Replace using LRU (smallest lastUsed)
+                    targetEntry = setWays.reduce((prev, curr) => prev.lastUsed < curr.lastUsed ? prev : curr);
+                    missType = type === 'direct' ? "Conflict Miss (Menimpa blok di set yang sama!)" : "Conflict/Capacity Miss (Evict blok LRU)";
+                }
+
+                const oldBlock = targetEntry.block;
+                targetEntry.valid = 1;
+                targetEntry.tag = tag;
+                targetEntry.block = `Block ${blockAddr}`;
+                targetEntry.lastUsed = accessCounter;
+
+                logMsg += `<span class="text-rose-400 font-bold">❌ CACHE MISS (${missType})!</span><br>`;
+                logMsg += `• Mengambil Block ${blockAddr} dari Main Memory → dimasukkan ke Set ${setIndex}, Way ${targetEntry.way}` + (oldBlock !== '-' ? ` (menggantikan ${oldBlock}).` : `.`);
+            }
+
+            renderCacheTable(setIndex, tag);
+            updateCacheStats();
+            document.getElementById('cache-step-explanation').innerHTML = logMsg;
+        }
+
+        function runConflictDemo() {
+            resetCacheSim();
+            setTimeout(() => accessCacheBlock(0), 200);
+            setTimeout(() => accessCacheBlock(4), 900);
+            setTimeout(() => accessCacheBlock(0), 1600);
+        }
+
+        function renderCacheTable(activeSet = -1, activeTag = -1) {
+            const tbody = document.getElementById('cache-table-body');
+            tbody.innerHTML = cacheState.map(row => {
+                const isHighlighted = row.set === activeSet && row.tag === activeTag;
+                return `
+                    <tr class="${isHighlighted ? 'bg-amber-100 font-bold' : ''}">
+                        <td class="p-3">Set ${row.set}</td>
+                        <td class="p-3">Way ${row.way}</td>
+                        <td class="p-3">${row.valid === 1 ? '<span class="px-2 py-0.5 bg-emerald-100 text-emerald-800 rounded">1</span>' : '<span class="px-2 py-0.5 bg-slate-100 text-slate-500 rounded">0</span>'}</td>
+                        <td class="p-3">${row.tag}</td>
+                        <td class="p-3 text-blue-700">${row.block}</td>
+                        <td class="p-3 text-slate-400">${row.lastUsed}</td>
+                    </tr>
+                `;
+            }).join('');
+        }
+
+        function updateCacheStats() {
+            document.getElementById('stat-hits').textContent = cacheHits;
+            document.getElementById('stat-misses').textContent = cacheMisses;
+            const total = cacheHits + cacheMisses;
+            const rate = total === 0 ? 0 : Math.round((cacheHits / total) * 100);
+            document.getElementById('stat-hitrate').textContent = rate + '%';
+        }
+
+        function calcAMAT() {
+            const l1Hit = parseFloat(document.getElementById('amat-l1-hit').value) || 0;
+            const l1Miss = (parseFloat(document.getElementById('amat-l1-miss').value) || 0) / 100;
+            const l2Hit = parseFloat(document.getElementById('amat-l2-hit').value) || 0;
+            const l2Miss = (parseFloat(document.getElementById('amat-l2-miss').value) || 0) / 100;
+            const memLat = parseFloat(document.getElementById('amat-mem-lat').value) || 0;
+
+            document.getElementById('mem-lat-val').textContent = memLat;
+            const l1Penalty = l2Hit + (l2Miss * memLat);
+            const amat = l1Hit + (l1Miss * l1Penalty);
+            document.getElementById('amat-result').textContent = amat.toFixed(2);
+        }
+
+        resetCacheSim();
+        calcAMAT();
+
+        // ==========================================
+        // TAB 4: VIRTUAL MEMORY & TLB SIMULATOR
+        // ==========================================
+        function simulateVM(scenario) {
+            const boxes = ['vm-box-cpu', 'vm-box-tlb', 'vm-box-pt', 'vm-box-ram'];
+            boxes.forEach(id => {
+                const el = document.getElementById(id);
+                el.className = "p-4 rounded-xl border-2 border-slate-200 bg-slate-50 transition-all";
+            });
+
+            const exp = document.getElementById('vm-explanation');
+
+            if (scenario === 'tlb_hit') {
+                document.getElementById('vm-box-cpu').classList.add('border-emerald-500', 'bg-emerald-50');
+                document.getElementById('vm-box-tlb').classList.add('border-emerald-500', 'bg-emerald-50', 'pulse-signal');
+                document.getElementById('vm-box-ram').classList.add('border-emerald-500', 'bg-emerald-50');
+                exp.innerHTML = `<span class="text-emerald-400 font-bold">🚀 SKENARIO 1: TLB HIT (Jalur Ekspres)</span><br>
+                1. CPU mengirim Virtual Address ke MMU.<br>
+                2. MMU mengecek <b>TLB (Translation Lookaside Buffer)</b> dan menemukan translasi VPN → Frame Number secara paralel.<br>
+                3. Page Table di RAM <b>tidak perlu diakses</b>! Alamat fisik langsung terbentuk dan data diambil dari Cache/RAM.`;
+            } else if (scenario === 'pt_hit') {
+                document.getElementById('vm-box-cpu').classList.add('border-amber-500', 'bg-amber-50');
+                document.getElementById('vm-box-tlb').classList.add('border-rose-400', 'bg-rose-50');
+                document.getElementById('vm-box-pt').classList.add('border-amber-500', 'bg-amber-50', 'pulse-signal');
+                document.getElementById('vm-box-ram').classList.add('border-amber-500', 'bg-amber-50');
+                exp.innerHTML = `<span class="text-amber-400 font-bold">⚠️ SKENARIO 2: TLB MISS → PAGE TABLE HIT</span><br>
+                1. VPN tidak ditemukan di TLB (TLB Miss).<br>
+                2. MMU melakukan <i>Page Table Walk</i> ke <b>Page Table</b> yang tersimpan di Main Memory (RAM).<br>
+                3. Pemetaan ditemukan (Valid bit = 1)! MMU menyalin pemetaan ini ke dalam TLB agar akses berikutnya menjadi TLB Hit, lalu mengakses Frame fisik di RAM.`;
+            } else if (scenario === 'page_fault') {
+                document.getElementById('vm-box-cpu').classList.add('border-rose-500', 'bg-rose-50');
+                document.getElementById('vm-box-tlb').classList.add('border-rose-500', 'bg-rose-50');
+                document.getElementById('vm-box-pt').classList.add('border-rose-500', 'bg-rose-50');
+                document.getElementById('vm-box-ram').classList.add('border-rose-600', 'bg-rose-100', 'pulse-signal');
+                exp.innerHTML = `<span class="text-rose-400 font-bold">🛑 SKENARIO 3: PAGE FAULT (Akses Hard Disk / Swap Space)</span><br>
+                1. TLB Miss dan di Page Table status <b>Valid/Present bit = 0</b> (halaman belum ada di RAM).<br>
+                2. Terjadi interupsi <b>Page Fault</b> ke Sistem Operasi.<br>
+                3. Jika RAM penuh, OS memindahkan (<i>evict</i>) frame korban ke <b>Swap Space (Hard Disk/SSD)</b>, membaca halaman baru dari disk ke RAM, memperbarui Page Table & TLB, lalu mengulang instruksi.`;
+            }
+        }
+    </script>
+</body>
+</html>
